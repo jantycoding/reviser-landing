@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
-import { checkout, contacts, payEndpoint, auditPrice, assistantName } from '../content/site';
+import PriceUsd from '../components/ui/PriceUsd';
+import { checkout, contacts, payEndpoint, auditPrice, auditPriceUsd, assistantName } from '../content/site';
 import { trackWhatsAppClick } from '../lib/track';
 
 /**
- * Оплата разбора прямо на странице.
+ * Оплата аудита прямо на странице.
  *
  * Поток: телефон → счёт в Kaspi → QR/кнопка оплаты → код доступа → WhatsApp-агент.
  * Код нужен, чтобы агент в WhatsApp понимал, что перед ним оплативший клиент,
@@ -22,7 +23,7 @@ import { trackWhatsAppClick } from '../lib/track';
  * Поэтому в запасном режиме кнопка — настоящая <a href> с уже подставленными
  * именем и телефоном.
  */
-/** Неразрывные пробелы в цене: «Разбор бизнеса за 9 900 ₸» иначе рвётся на
+/** Неразрывные пробелы в цене: «Аудит бизнеса за 14 990 ₸» иначе рвётся на
  *  «за 9 / 900 ₸» — в заголовке блока, где человек платит. */
 const bindNumbers = s => String(s).replace(/(\d)\s(?=\d)/g, '$1\u00A0').replace(/\s₸/g, '\u00A0₸');
 
@@ -57,7 +58,7 @@ function Summary() {
   return (
     <div className="rounded-xl border border-line bg-surface/60 px-4 py-4 md:px-5">
       {/* Нейтральный заголовок чека. Раньше здесь стояла та же фраза, что в h2
-          слева («Разбор бизнеса — 9 900 ₸»), — одно и то же предложение дважды
+          слева («Аудит бизнеса — 14 990 ₸»), — одно и то же предложение дважды
           на одном экране в 550px друг от друга. */}
       <div className="text-body font-semibold text-chalk">{checkout.summaryTitle ?? 'Вы платите за'}</div>
       <ul className="mt-3 space-y-2">
@@ -140,9 +141,9 @@ export default function Checkout() {
   const waLink = ({ code, name, phone } = {}) => {
     let text;
     if (code) {
-      text = `Код ${code}. Оплатил разбор, готов начать.`;
+      text = `Код ${code}. Оплатил аудит, готов начать.`;
     } else {
-      const parts = [`Здравствуйте! Хочу разбор бизнеса за ${auditPrice}.`];
+      const parts = [`Здравствуйте! Хочу аудит бизнеса за ${auditPrice}.`];
       if (name?.trim()) parts.push(`Меня зовут ${name.trim()}.`);
       if (phone?.trim()) parts.push(`Телефон: ${phone.trim()}.`);
       text = parts.join(' ');
@@ -187,7 +188,7 @@ export default function Checkout() {
       const res = await fetch(`${payEndpoint}/invoice`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, product: 'audit', amount: 9900 }),
+        body: JSON.stringify({ ...values, product: 'audit', amount: 14990 }),
       });
       if (!res.ok) throw new Error(String(res.status));
       const data = await res.json(); // { code, payUrl, qr }
@@ -227,6 +228,17 @@ export default function Checkout() {
             {/* В запасном режиме нельзя обещать оплату на странице: заголовок и
                 лид описывают ровно то, что произойдёт после клика. */}
             <SectionTitle>{bindNumbers(payEndpoint ? checkout.title : checkout.fallbackTitle)}</SectionTitle>
+
+            {/* Долларовый эквивалент — сразу под ценой в заголовке блока, где
+                принимается решение о платеже, а не в подписи мелким шрифтом.
+                Строкой ниже, а не в одну строку с h2: заголовок здесь
+                флюидный (до 48px) и на 390px переносится на две строки —
+                бейдж, вклеенный внутрь, уезжал бы в случайное место. */}
+            <div className="mt-4 flex items-center gap-3">
+              <PriceUsd>{auditPriceUsd}</PriceUsd>
+              <span className="text-fine text-mist">дешевле, чем один рекламный день</span>
+            </div>
+
             <SectionLead>{payEndpoint ? checkout.subtitle : checkout.fallbackSubtitle}</SectionLead>
 
             {/* Цепочка шагов переехала из-под кнопки сюда. «Что будет после

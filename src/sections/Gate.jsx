@@ -3,16 +3,8 @@ import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Se
 import { gate } from '../content/site';
 
 /**
- * Разряды числа и знак валюты склеиваются неразрывными пробелами.
- * На 390px строка цены иначе рвётся как «от 600 / 000 ₸» — ровно там,
- * где человек впервые видит обе цифры и решает, дорого это или нет.
- * Текст не меняется, меняется только перенос.
- */
-const bindNumbers = s => s.replace(/(\d)\s(?=\d)/g, '$1\u00A0').replace(/\s₸/g, '\u00A0₸');
-
-/**
  * Поворотная точка воронки: до этого блока продавали агентов,
- * после — продаём разбор как обязательный первый шаг.
+ * после — продаём аудит как обязательный первый шаг.
  *
  * Здесь же — первое осмысленное появление цены. Согласие человека («да,
  * наугад ставить нельзя») максимально именно в конце трёх аргументов, и
@@ -53,20 +45,29 @@ export default function Gate() {
           ))}
         </div>
 
-        {/* Цена и выход в оплату — в той же рамке, как вывод из трёх доводов. */}
+        {/* Выход в оплату — вывод из трёх доводов.
+            Решение владельца 07.08.2026: вместо полосы «абзац с ценами слева +
+            мелкая кнопка справа» здесь одна крупная кнопка. Раньше текст
+            занимал две трети строки, и кнопка — единственное действие
+            секции — читалась как сноска к абзацу.
+            Ширина ограничена 34rem и блок центрирован: кнопка во всю ширину
+            рамки на 1152px превращается в полосу, по которой непонятно, куда
+            целиться, и перестаёт читаться как кнопка. */}
         <Reveal delay={0.12}>
-          <div className="mt-8 flex flex-col items-start gap-6 border-t border-line pt-8 md:mt-10 md:flex-row md:items-center md:justify-between md:pt-10">
-            <p className="max-w-[62ch] text-lead text-pretty text-chalk">{bindNumbers(gate.priceLine)}</p>
-
-            <div className="flex shrink-0 flex-col items-start gap-2.5 md:items-end">
-              <a
-                href="#checkout"
-                className="press rounded-xl bg-signal px-5 py-4 min-[400px]:px-7 text-body font-semibold whitespace-nowrap text-ink hover:-translate-y-0.5 hover:bg-signal-soft hover:shadow-[0_12px_28px_-14px_rgba(185,190,199,0.85)]"
-              >
-                {gate.cta}
-              </a>
-              <span className="text-fine text-mist">{gate.ctaNote}</span>
-            </div>
+          <div className="mt-8 flex flex-col items-center gap-3 border-t border-line pt-8 md:mt-10 md:pt-10">
+            <a
+              href={gate.ctaHref}
+              className="press group relative block w-full max-w-[34rem] overflow-hidden rounded-2xl bg-signal px-6 py-5 text-center text-lead font-semibold text-ink transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-20px_rgba(185,190,199,0.95)]"
+            >
+              <span className="relative z-10">{gate.cta}</span>
+              {/* Тот же блик, что на кнопке оплаты в #checkout. Он остался ровно
+                  на двух кнопках страницы — тех, что ведут к деньгам. */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+              />
+            </a>
+            <span className="text-fine text-mist">{gate.ctaNote}</span>
           </div>
         </Reveal>
       </div>

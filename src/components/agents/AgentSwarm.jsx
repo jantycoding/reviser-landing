@@ -196,7 +196,7 @@ export default function AgentSwarm() {
                           строках. Цикл длится 8 шагов по 2.6 с, и при прежних
                           blur(3px)/opacity 0.45 панель была полностью читаемой
                           ровно один шаг из восьми — то есть 12% времени. Это
-                          единственный на странице образец продукта за 9 900 ₸,
+                          единственный на странице образец продукта за 14 990 ₸,
                           и человек, поймавший его в любой другой момент, видел
                           размытую таблицу. Драматургия сканирования осталась в
                           подсветке активной строки; текст читается всегда. */}
@@ -273,13 +273,13 @@ export default function AgentSwarm() {
 
             {/* подвал панели */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line bg-surface/40 px-5 py-3.5 text-fine text-mist">
+              {/* Один пункт вместо двух. Решение владельца 07.08.2026: все
+                  находки в демо закрывают агенты, и подпись «чините своими
+                  силами» осталась бы легендой к цвету, которого в таблице
+                  больше нет, — это читается как недоделка, а не как смысл. */}
               <span className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-iris" />
-                закрывает ИИ-агент
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-line-2" />
-                чините своими силами
+                {panel.legend}
               </span>
             </div>
           </div>
@@ -293,7 +293,7 @@ export default function AgentSwarm() {
         )}
       </div>
 
-      {/* прогресс разбора */}
+      {/* прогресс аудита */}
       <div className="mt-4 h-px w-full overflow-hidden bg-line" aria-hidden="true">
         <div
           className="h-full bg-iris"

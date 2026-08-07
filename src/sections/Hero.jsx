@@ -1,8 +1,7 @@
 import { Suspense, lazy } from 'react';
 import Reveal from '../components/ui/Reveal';
 import SplitText from '../components/reactbits/SplitText';
-import { hero, stats, contacts } from '../content/site';
-import { trackWhatsAppClick } from '../lib/track';
+import { hero, stats } from '../content/site';
 
 /* FloatingLines тянет за собой three.js — это ~600 КБ из 890 КБ всего бандла.
    Пока он лежал в основном чанке, первый экран не показывался, пока весь
@@ -149,12 +148,16 @@ export default function Hero() {
               {hero.primaryCta}
             </a>
 
-            {/* Живое демо: заявки принимает наш же агент. Лучшее доказательство продукта. */}
+            {/* Решение владельца 07.08.2026: кнопка больше не уводит в WhatsApp,
+                а ведёт в секцию «Ворота» (#gate). Логика — человек на первом
+                экране ещё не знает, что покупает, и диалог в мессенджере
+                начинался с объяснений вместо продажи. Теперь между «хочу» и
+                «пишу» стоят три довода и кнопка оплаты.
+                Ссылка внутренняя, поэтому без target="_blank" и без
+                trackWhatsAppClick: событие Contact на переход внутри страницы
+                испортило бы статистику пикселя. */}
             <a
-              href={`https://wa.me/${contacts.whatsapp}`}
-              onClick={() => trackWhatsAppClick('hero')}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={hero.secondaryHref}
               className="flex items-center justify-center gap-2.5 rounded-xl border border-line bg-surface/60 px-6 py-4 text-body font-medium whitespace-nowrap text-chalk transition-colors hover:border-verify/50 hover:bg-surface-2"
             >
               <span className="text-verify">
