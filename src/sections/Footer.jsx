@@ -1,5 +1,6 @@
 import Logo from '../components/ui/Logo';
 import { footer, contacts, navItems, brand } from '../content/site';
+import { trackWhatsAppClick } from '../lib/track';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -35,6 +36,7 @@ export default function Footer() {
               <li>
                 <a
                   href={`https://wa.me/${contacts.whatsapp}`}
+                  onClick={() => trackWhatsAppClick('footer')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-body text-fog transition-colors hover:text-chalk"

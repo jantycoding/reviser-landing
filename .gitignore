@@ -28,3 +28,11 @@ _backup_*/
 _to_delete/
 _sync-latest/
 *.tgz
+
+# Локальные переменные окружения — секреты в историю не идут
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel

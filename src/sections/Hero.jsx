@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import Reveal from '../components/ui/Reveal';
 import SplitText from '../components/reactbits/SplitText';
 import { hero, stats, contacts } from '../content/site';
+import { trackWhatsAppClick } from '../lib/track';
 
 /* FloatingLines тянет за собой three.js — это ~600 КБ из 890 КБ всего бандла.
    Пока он лежал в основном чанке, первый экран не показывался, пока весь
@@ -151,6 +152,7 @@ export default function Hero() {
             {/* Живое демо: заявки принимает наш же агент. Лучшее доказательство продукта. */}
             <a
               href={`https://wa.me/${contacts.whatsapp}`}
+              onClick={() => trackWhatsAppClick('hero')}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2.5 rounded-xl border border-line bg-surface/60 px-6 py-4 text-body font-medium whitespace-nowrap text-chalk transition-colors hover:border-verify/50 hover:bg-surface-2"

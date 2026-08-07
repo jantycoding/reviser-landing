@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
 import { checkout, contacts, payEndpoint, auditPrice, assistantName } from '../content/site';
+import { trackWhatsAppClick } from '../lib/track';
 
 /**
  * Оплата разбора прямо на странице.
@@ -111,12 +112,25 @@ function Steps({ active }) {
 }
 
 export default function Checkout() {
-  const [values, setValues] = useState({ name: '', phone: '' });
+  const [values, setValues] = useState({ name: '', phone: '', company: '' });
   const [status, setStatus] = useState('idle'); // idle | sending | pay | paid | error
   const [order, setOrder] = useState(null); // { code, payUrl, qr }
   const pollRef = useRef(null);
 
   const handleChange = e => setValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  /**
+   * Единственная точка, через которую человек уходит в WhatsApp из этого блока.
+   *
+   * Порядок важен: сначала отправляем заявку и событие, потом отдаём переход
+   * браузеру. Заявка уходит через sendBeacon, поэтому «сначала» стоит доли
+   * миллисекунды и переход не задерживается — см. src/lib/track.js.
+   *
+   * Вызывается из трёх мест, потому что уйти в WhatsApp можно тремя способами:
+   * тап по кнопке, Enter в поле и (в боевом режиме оплаты) сабмит формы.
+   * Пропустить любой из них — значит терять именно тех, кто дошёл до конца.
+   */
+  const handOff = () => trackWhatsAppClick('checkout', values);
 
   /**
    * Текст сообщения агенту. В запасном режиме подставляем то, что человек уже
@@ -162,10 +176,12 @@ export default function Checkout() {
      * ведёт туда же, куда клик.
      */
     if (!payEndpoint) {
+      handOff();
       window.location.href = waLink(values);
       return;
     }
 
+    handOff();
     setStatus('sending');
     try {
       const res = await fetch(`${payEndpoint}/invoice`, {
@@ -316,6 +332,7 @@ export default function Checkout() {
                 onKeyDown={e => {
                   if (e.key !== 'Enter' || payEndpoint) return;
                   e.preventDefault();
+                  handOff();
                   window.location.href = waLink(values);
                 }}
                 className="grid gap-4"
@@ -341,6 +358,23 @@ export default function Checkout() {
                   required={Boolean(payEndpoint)}
                 />
 
+                {/* Ловушка для спам-ботов. Поле есть в разметке, но скрыто от
+                    человека и убрано из порядка табуляции и из дерева
+                    доступности: живой посетитель его не увидит и не заполнит,
+                    автозаполнялка бота — заполнит. Бэкенд молча отбрасывает
+                    заявку с непустым company. Дешевле любой капчи и не требует
+                    от клиента ни одного лишнего действия. */}
+                <input
+                  type="text"
+                  name="company"
+                  value={values.company}
+                  onChange={handleChange}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute h-0 w-0 opacity-0"
+                />
+
                 <Summary />
 
                 {payEndpoint ? (
@@ -349,7 +383,13 @@ export default function Checkout() {
                     <span className={shineClass} />
                   </button>
                 ) : (
-                  <a href={waLink(values)} target="_blank" rel="noopener noreferrer" className={ctaClass}>
+                  <a
+                    href={waLink(values)}
+                    onClick={handOff}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={ctaClass}
+                  >
                     <span className="relative z-10">{checkout.fallbackCta}</span>
                     <span className={shineClass} />
                   </a>

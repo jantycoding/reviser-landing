@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
 import { faq, contacts } from '../content/site';
+import { trackWhatsAppClick } from '../lib/track';
 
 function Item({ item, index, isOpen, onToggle }) {
   const panelId = `faq-panel-${index}`;
@@ -76,6 +77,7 @@ export default function Faq() {
             <SectionLead>{faq.lead}</SectionLead>
             <a
               href={`https://wa.me/${contacts.whatsapp}`}
+              onClick={() => trackWhatsAppClick('faq')}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-7 inline-flex items-center gap-2.5 rounded-xl border border-line bg-surface px-5 py-3 text-body font-medium text-chalk transition-colors hover:border-line-2"
