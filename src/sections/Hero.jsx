@@ -1,7 +1,22 @@
+import { Suspense, lazy } from 'react';
 import Reveal from '../components/ui/Reveal';
 import SplitText from '../components/reactbits/SplitText';
-import FloatingLines from '../components/reactbits/FloatingLines';
 import { hero, stats, contacts } from '../content/site';
+
+/* FloatingLines тянет за собой three.js — это ~600 КБ из 890 КБ всего бандла.
+   Пока он лежал в основном чанке, первый экран не показывался, пока весь
+   three не скачался и не распарсился: на 4G это несколько секунд чёрного
+   экрана. Трафик на страницу платный и идёт из инстаграма с телефонов, так
+   что эти секунды оплачены.
+
+   Компонент чисто декоративный (aria-hidden, фон), поэтому он вынесен в
+   отдельный чанк и подгружается после интерактивного текста. До его загрузки
+   на месте фона — статичный градиент ниже, тот же, что и с включённым
+   WebGL. Ничего не «прыгает»: линии просто проявляются на секунду позже.
+
+   Правило на будущее: любой WebGL/canvas-фон на этой странице импортируется
+   только через lazy(). Прямой import снова утащит three в основной чанк. */
+const FloatingLines = lazy(() => import('../components/reactbits/FloatingLines'));
 
 function Bolt() {
   return (
@@ -29,16 +44,18 @@ export default function Hero() {
           компонент сам рисует один статичный кадр без rAF-цикла — тот же
           приём, что и в Orb/GradientWaves, там же объяснение почему. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[90vh] opacity-90">
-        <FloatingLines
-          enabledWaves={['top', 'middle', 'bottom']}
-          lineCount={[10, 15, 20]}
-          lineDistance={[8, 6, 4]}
-          bendRadius={5.0}
-          bendStrength={-0.5}
-          interactive
-          parallax
-          linesGradient={['#e4e7ec', '#b9bec7', '#4d84bf']}
-        />
+        <Suspense fallback={null}>
+          <FloatingLines
+            enabledWaves={['top', 'middle', 'bottom']}
+            lineCount={[10, 15, 20]}
+            lineDistance={[8, 6, 4]}
+            bendRadius={5.0}
+            bendStrength={-0.5}
+            interactive
+            parallax
+            linesGradient={['#e4e7ec', '#b9bec7', '#4d84bf']}
+          />
+        </Suspense>
       </div>
       <div
         aria-hidden="true"
