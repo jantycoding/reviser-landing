@@ -1,0 +1,432 @@
+@import 'tailwindcss';
+
+/* ==================================================================
+ * Reviser — design tokens
+ * Палитра «Metal Noir» (решение владельца, 06.08.2026 — см. BRIEF.md,
+ * отменяет Midnight Mirage от того же дня):
+ *   1. ink      — нейтральная шкала, фон = чистый чёрный #000000
+ *   2. signal   — серебристо-металлический (с градиентом на заливках) + белый
+ *   3. verify   — глубокий профессиональный синий: проверено, подтверждено
+ * Типографика — флюидная шкала, минимум 16px в основном тексте.
+ * ================================================================== */
+@theme {
+  /* --- 1. Нейтраль — чистый чёрный фон ------------------------------ */
+  --color-ink: #000000;
+  --color-ink-2: #0a0a0c;
+  --color-surface: #141518;
+  --color-surface-2: #1c1d21;
+  --color-line: #26272b;
+  --color-line-2: #33343a;
+  /* mist 7.97:1, fog 13.00:1 на чёрном — обе выше порога AA 4.5:1. */
+  --color-mist: #9aa0a8;
+  --color-fog: #c7ccd2;
+  --color-chalk: #ffffff;
+
+  /* --- 2. Signal — серебристо-металлический -------------------------
+     Флэт-токен для текста/бордеров/мелких заливок (11.25:1 на чёрном).
+     У кнопок (`.bg-signal`) поверх этого лежит настоящий металлический
+     градиент — см. правило `.bg-signal` в конце файла. Кнопка на такой
+     светлой заливке требует ТЁМНЫЙ текст (`text-ink`), не `text-white` —
+     это единственное на что нужно проверять при добавлении новой кнопки. */
+  --color-signal: #b9bec7;
+  --color-signal-soft: #e4e7ec;
+  --color-signal-dim: #1a1a1c;
+
+  /* --- 3. Verify — профессиональный синий ---------------------------
+     #4d84bf на #000000 = 5.37:1, проходит AA. Более тёмная синева
+     (Nuit Blanche-подобная) на чистом чёрном уходит ниже 2:1 — здесь так
+     низко не годится, фон темнее прежнего Midnight Mirage. */
+  --color-verify: #4d84bf;
+  --color-verify-dim: #0d1b2a;
+
+  /* Псевдонимы для компонентов (AgentSwarm, FloatingLines, Logo). */
+  --color-iris: var(--color-signal);
+  --color-iris-soft: var(--color-signal-soft);
+  --color-azure: var(--color-verify);
+  --color-orchid: #2f5f8f;
+  --color-orchid-soft: #4d84bf;
+
+  /* --- Шрифты -----------------------------------------------------
+     Unbounded — «вырезной», геометрический дисплейный шрифт для h1/h2:
+     решение владельца 06.08.2026, обычный текст остаётся на Inter. */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Unbounded', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* --- Флюидная типографическая шкала ------------------------------
+   * Каждый размер растёт от 360px до 1440px вьюпорта.
+   * Базовый текст никогда не опускается ниже 15px и доходит до 17px. */
+  /* Нижняя граница — 13px, а не 12px: на 390px (основной экран аудитории)
+     этим токеном набраны 34 элемента — все eyebrow, «ВМЕСТО» в карточках
+     агентов, бейджи «ИИ-АГЕНТ», шапки отчёта. 12px в контенте запрещены. */
+  --text-label: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --text-label--line-height: 1.35;
+  --text-label--letter-spacing: 0.14em;
+
+  --text-fine: clamp(0.875rem, 0.85rem + 0.15vw, 0.9375rem);
+  --text-fine--line-height: 1.55;
+
+  --text-body: clamp(0.9375rem, 0.9rem + 0.21vw, 1.0625rem);
+  --text-body--line-height: 1.62;
+
+  --text-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --text-lead--line-height: 1.55;
+
+  --text-card: clamp(1.0625rem, 0.99rem + 0.38vw, 1.3125rem);
+  --text-card--line-height: 1.35;
+  --text-card--letter-spacing: -0.01em;
+
+  --text-h3: clamp(1.25rem, 1.14rem + 0.53vw, 1.625rem);
+  --text-h3--line-height: 1.22;
+  --text-h3--letter-spacing: -0.015em;
+
+  --text-h2: clamp(1.75rem, 1.33rem + 1.95vw, 3rem);
+  --text-h2--line-height: 1.08;
+  --text-h2--letter-spacing: -0.028em;
+
+  /* Уменьшен максимум под Unbounded (06.08.2026): у «вырезного» дисплейного
+     шрифта глифы заметно шире Inter при той же кегль, и на 4.25rem заголовок
+     hero расползался на 5 строк вместо 2-3. */
+  --text-h1: clamp(2rem, 1.5rem + 2.4vw, 3.5rem);
+  --text-h1--line-height: 1.08;
+  --text-h1--letter-spacing: -0.02em;
+
+  --text-metric: clamp(1.75rem, 1.42rem + 1.55vw, 2.75rem);
+  --text-metric--line-height: 1;
+  --text-metric--letter-spacing: -0.03em;
+
+  /* --- Вертикальный ритм ------------------------------------------ */
+  /* ВНИМАНИЕ: имя spacing-токена не должно совпадать с ключевым словом
+     display. Токен `--spacing-block` заставлял Tailwind сгенерировать вторую
+     версию класса `.inline-block` — `inline-size: var(--spacing-block)` — и
+     она перебивала `display:inline-block`. Все inline-block на странице
+     получали ширину 72px и обрезали текст. Отсюда `stack`, а не `block`. */
+  --spacing-section: clamp(4.5rem, 3rem + 6.2vw, 8rem);
+  /* Сжатый ритм для секций, которые читаются как одна мысль подряд
+     («Ворота → Разбор → Отчёт»). При обычном py-section между ними 256px
+     пустоты, из-за чего каждый стык выглядит как конец аргумента и даёт
+     повод уйти со страницы до цены. Имя намеренно не совпадает с ключевыми
+     словами display (block/inline/flex/grid/table/contents) — см. ловушку №2. */
+  --spacing-section-tight: clamp(2.75rem, 2rem + 3vw, 4.5rem);
+  --spacing-stack: clamp(2.5rem, 1.8rem + 3vw, 4.5rem);
+}
+
+/* ------------------------------------------------------------------ *
+ * Сброс и база
+ * ------------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6.5rem;
+  /* ВАЖНО: здесь НЕ должно быть overflow-x. `clip` и `hidden` на <html>
+     ломают нативный переход по якорям — меню перестаёт скроллить страницу.
+     Горизонтальное переполнение режем локально, утилитой .clip-x. */
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-ink);
+  color: var(--color-chalk);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.62;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* iOS Safari масштабирует всю страницу при фокусе на поле с кеглем МЕНЬШЕ 16px.
+   Порог именно 16px, а не 14px. Токен --text-body на 390px даёт 15.22px, то
+   есть на последнем шаге воронки — тап по «Как вас зовут» — страница прыгает и
+   кнопка оплаты уезжает за край экрана. Правило нарочно живёт вне @layer:
+   так оно перебивает utility-класс text-body на полях, не трогая сам токен,
+   которым набрана вся страница. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* На тач-устройствах :hover не срабатывает, а браузер ещё и держит 300ms
+   паузу на double-tap-zoom — нажатие на «Оплатить 9 900 ₸» ощущается как
+   «сайт не отвечает» и провоцирует второй тап (двойной сабмит) ровно в точке
+   оплаты. manipulation убирает задержку, утилита .press даёт видимый отклик. */
+button,
+a {
+  touch-action: manipulation;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-signal) 40%, transparent);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-line-2);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------------ *
+ * Ритм воронки: к оплате страница уплотняется, а не разряжается
+ * ------------------------------------------------------------------ *
+ * Замеры до правки (1440px, от последней строки секции до первой строки
+ * следующей): 202 → 230 → 210 → 250 → 190 → 209 → 265 → 298 → 332. То есть
+ * самая большая пауза — 332px, почти полэкрана — стояла ровно между последним
+ * снятым возражением в FAQ и блоком оплаты. Визуально это сообщает «всё,
+ * конец» именно там, где человек либо платит, либо уходит.
+ *
+ * Правила намеренно живут здесь, а не в Section.jsx: файлы секций правят
+ * другие агенты, а ритм — предмет дизайн-системы. Селектор по id (0-1-0-0)
+ * перебивает утилиту py-section, при этом сам класс на элементе остаётся:
+ * если секцию когда-нибудь переименуют, вернётся обычный ритм, а не ноль. */
+#pricing {
+  padding-bottom: var(--spacing-section-tight);
+}
+#faq {
+  padding-top: var(--spacing-section-tight);
+  padding-bottom: var(--spacing-section-tight);
+}
+#checkout {
+  padding-top: var(--spacing-section-tight);
+}
+
+/* ------------------------------------------------------------------ *
+ * Появление блоков при скролле.
+ * Базовое состояние — ВИДИМОЕ. Прятать элемент имеет право только JS,
+ * и только после того, как повесил на него IntersectionObserver.
+ * Никаких JS-таймлайнов: анимация целиком на CSS, зависнуть не может.
+ * ------------------------------------------------------------------ */
+@keyframes rv-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--rv-y, 22px), 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.is-armed {
+  opacity: 0;
+}
+
+.is-armed.is-in {
+  animation: rv-up var(--rv-dur, 0.62s) cubic-bezier(0.22, 1, 0.36, 1) var(--rv-delay, 0s) both;
+}
+
+/* ------------------------------------------------------------------ *
+ * Бегущая строка — на CSS, без JS-цикла
+ * ------------------------------------------------------------------ */
+@keyframes marquee-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-x var(--mq-dur, 46s) linear infinite;
+}
+
+.marquee:hover,
+.marquee:focus-within {
+  animation-play-state: paused;
+}
+
+/* Ручная пауза (кнопка в Marquee.jsx) — WCAG 2.2.2: движение дольше 5 секунд
+   обязано иметь механизм остановки, а :hover на телефоне не существует.
+   !important здесь по делу: Platforms.jsx управляет тем же свойством инлайном
+   через IntersectionObserver, и без него решение пользователя сбрасывалось бы
+   при следующем входе секции в кадр. */
+.marquee[data-user-paused='true'] {
+  animation-play-state: paused !important;
+}
+
+/* Проценты считаются от размера самого курсора? Нет — от бокса, к которому
+   привязана анимация (absolute inset-0 панели отчёта). Поэтому потолок по X —
+   78%, а не 100%: правее подпись агента («ФИНАНСЫ», «ОПЕРАЦИИ») упирается в
+   правый край панели и срезается. По Y потолок 80% — ниже подпись уезжает под
+   нижнюю плашку панели. Стартовые точки разведены по трём разным углам
+   (верх-лево / верх-право / низ-право), иначе на первой секунде все три
+   курсора стоят стопкой и фирменная деталь читается как баг вёрстки. */
+/* На узком экране строка отчёта складывается в одну колонку: направление,
+   находка и бейдж «ИИ-АГЕНТ» встают друг под друга и занимают всю ширину
+   панели. Свободной зоны, куда мог бы встать курсор с непрозрачной подписью,
+   в этой раскладке нет — замерено: плашка «Заявки» полностью накрывает бейдж
+   первой строки и начало текста «4 из 10 лидов без повторного касания». Это
+   единственный на странице образец продукта, и он показывается сломанным той
+   аудитории, которая читает страницу с телефона.
+   Гасим курсор только на <640px, переопределяя кейфреймы в медиазапросе:
+   элемент рисует ReportPanel.jsx (чужой файл), зацепиться за него из CSS
+   больше не за что, а анимация к нему уже привязана. Панель не пустеет —
+   построчный скан row-scan остаётся и показывает работу агента. */
+@media (max-width: 639px) {
+      }
+
+@keyframes row-scan {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  45%,
+  62% {
+    background-color: color-mix(in oklab, var(--color-signal) 7%, transparent);
+  }
+}
+
+@keyframes claudik-work {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-4deg);
+  }
+  60% {
+    transform: translateY(0) rotate(3deg);
+  }
+}
+
+.claudik-work {
+  animation: claudik-work 0.85s ease-in-out infinite;
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Утилиты
+ * ------------------------------------------------------------------ */
+@utility clip-x {
+  overflow-x: clip;
+}
+
+@utility grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+/* Затухание краёв бегущей строки. 8% ширины — это 31px на 390px: чип не
+   успевает раствориться и читается как обрезанный («amoCRM» без левой рамки,
+   «WhatsApp Bus» с обрубленным правым краем), то есть секция «мы подключаемся
+   ко всему» выглядит недогруженной. Нужен нижний предел в пикселях, а не
+   только процент. Первая строка — запасная на случай, если движок не осилит
+   clamp со смешанными единицами в позиции стопа градиента. */
+@utility fade-x {
+  mask-image: linear-gradient(to right, transparent, black 13%, black 87%, transparent);
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black clamp(3.5rem, 13%, 7rem),
+    black calc(100% - clamp(3.5rem, 13%, 7rem)),
+    transparent
+  );
+}
+
+/* Тактильный отклик на нажатие. Вешается на любую кнопку/ссылку-действие:
+   единственная обратная связь, которую тач-пользователь получает до ответа
+   сервера. Только transform — не вызывает reflow и не конфликтует с hover. */
+@utility press {
+  transition-property: transform, background-color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Уважение к настройкам движения
+ * ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .is-armed {
+    opacity: 1 !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    /* Без сброса задержки акцентная строка h1 всё равно «доезжает» через
+       280ms (inline animation-delay в Hero) — при включённом «уменьшить
+       движение» это выглядит как подвисший заголовок на первом экране. */
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  /* Ленту платформ нельзя просто ускорить: с duration 0.01ms она мгновенно
+     доезжает до -50% и застывает сдвинутой — половина логотипов за краем,
+     блок читается как недогруженный. Полная остановка на исходной позиции. */
+  .marquee {
+    animation: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Металлический градиент на заливке `bg-signal`
+ * ------------------------------------------------------------------ *
+ * Решение владельца 06.08.2026: «серебристо-металлический с градиентом».
+ * `--color-signal` остаётся плоским токеном (нужен для text-signal,
+ * border-signal, полупрозрачных bg-signal/NN — там градиент неуместен).
+ * Здесь — только `background-image` поверх `background-color` из
+ * Tailwind-утилиты, конкретно для кнопок с явной заливкой `bg-signal`.
+ * Правило вне `@layer`, поэтому в каскаде всегда старше сгенерированной
+ * Tailwind-утилиты `.bg-signal` — не нужно бороться за specificity.
+ */
+.bg-signal {
+  background-image: linear-gradient(135deg, #f4f5f7 0%, #d6dade 32%, #b9bec7 60%, #888d97 100%);
+}
+.hover\:bg-signal-soft:hover {
+  background-image: linear-gradient(135deg, #ffffff 0%, #eef0f2 40%, #d6dade 100%);
+}
+
+/* Решение владельца 06.08.2026: кнопка «Получить разбор» в шапке (Header.jsx,
+   все состояния) — плоское серебро, БЕЗ металлического градиента выше, в
+   отличие от остальных bg-signal-кнопок на странице. `.bg-signal-flat` идёт
+   вместе с `.bg-signal` в className (нужен цвет-заливка из bg-signal, только
+   без background-image) и стоит ниже по файлу, поэтому при равной
+   специфичности выигрывает у правила `.bg-signal` выше. */
+.bg-signal-flat {
+  background-image: none;
+}
