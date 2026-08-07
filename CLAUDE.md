@@ -67,13 +67,18 @@ npm run lint     # oxlint
 src/
   content/site.js        весь текст страницы + цены + контакты
   index.css              токены @theme, ритм, анимации, утилиты
+  lib/track.js           отправка заявки в api/lead.js + события пикселя
   components/
     Header.jsx           навигация со скролл-спаем
-    ReportPanel.jsx      демо-панель отчёта с курсорами агентов
-    ui/                  Section, Reveal, Marquee
+    agents/
+      AgentSwarm.jsx     демо-панель отчёта с курсорами агентов
+      Claudik.jsx        маскот
+    ui/                  Section, Reveal, Marquee, Logo, PriceUsd
     reactbits/           вендорные компоненты (используются не все)
   sections/              Hero → Agents → Platforms → Gate → Audit →
                          Report → Process → Pricing → Faq → Checkout
+                         Footer рендерится в App.jsx вне <main>
+api/lead.js              serverless-функция: заявка с сайта → телеграм
 ```
 
 `_backup_*` и `_to_delete` — временные папки, в работе не участвуют.
