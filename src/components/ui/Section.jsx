@@ -9,11 +9,21 @@
  * «Ворота → Аудит → Отчёт». Каждый лишний экран пустоты на стыке — повод
  * закрыть страницу до того, как человек дошёл до цены.
  */
-export function Section({ id, children, className = '', tight = false }) {
+/**
+ * @param {'base'|'raised'|'deep'} tone — плоскость секции. Соседние секции
+ * идут разными планами: `base` — фон страницы (ink), `raised` — приподнятый
+ * (ink-2) с волосяной верхней границей и мягким светом у кромки, `deep` —
+ * утопленный, для низа страницы. Это единственный способ дать чёрному
+ * глубину, не добавляя цветов сверх трёх (палитра «Metal Noir»).
+ */
+export function Section({ id, children, className = '', tight = false, tone = 'base' }) {
   const rhythm = tight ? 'py-section-tight' : 'py-section';
+  const plane =
+    tone === 'raised' ? 'bg-ink-2 border-t border-line/70' : tone === 'deep' ? 'plane-deep border-t border-line/70' : '';
   return (
-    <section id={id} className={`relative w-full px-5 ${rhythm} md:px-8 ${className}`}>
-      <div className="mx-auto w-full max-w-6xl">{children}</div>
+    <section id={id} className={`relative w-full px-5 ${rhythm} md:px-8 ${plane} ${className}`}>
+      {tone !== 'base' && <span aria-hidden="true" className="section-glow" />}
+      <div className="relative mx-auto w-full max-w-6xl">{children}</div>
     </section>
   );
 }
@@ -46,7 +56,7 @@ export function Eyebrow({ children, tone = 'signal' }) {
  */
 export function SectionTitle({ children, className = '' }) {
   return (
-    <h2 className={`max-w-4xl text-h2 font-semibold text-pretty text-chalk sm:text-balance ${className}`}>
+    <h2 className={`max-w-4xl text-h2 font-medium text-pretty text-chalk sm:text-balance ${className}`}>
       {children}
     </h2>
   );

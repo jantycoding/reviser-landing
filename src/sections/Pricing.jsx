@@ -138,7 +138,7 @@ function PlanCard({ plan, muted = false }) {
 
 export default function Pricing() {
   return (
-    <Section id="pricing" className="bg-ink-2">
+    <Section id="pricing" tone="raised">
       <Reveal>
         <Eyebrow>{pricing.eyebrow}</Eyebrow>
         <SectionTitle>{pricing.title}</SectionTitle>

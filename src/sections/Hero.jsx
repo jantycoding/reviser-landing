@@ -1,22 +1,21 @@
 import { Suspense, lazy } from 'react';
 import Reveal from '../components/ui/Reveal';
+import SafeBackground from '../components/ui/SafeBackground';
 import SplitText from '../components/reactbits/SplitText';
+import CountUp from '../components/reactbits/CountUp';
 import { hero, stats } from '../content/site';
 
-/* FloatingLines тянет за собой three.js — это ~600 КБ из 890 КБ всего бандла.
-   Пока он лежал в основном чанке, первый экран не показывался, пока весь
-   three не скачался и не распарсился: на 4G это несколько секунд чёрного
-   экрана. Трафик на страницу платный и идёт из инстаграма с телефонов, так
-   что эти секунды оплачены.
+/* Фон первого экрана — Prism (react-bits, WebGL через ogl). Поставлен
+   08.08.2026 по запросу владельца, заменил Aurora; та, в свою очередь,
+   заменила FloatingLines тем же днём. Оба предыдущих компонента остаются в
+   кодовой базе неиспользуемыми — как Orb и GradientWaves.
 
-   Компонент чисто декоративный (aria-hidden, фон), поэтому он вынесен в
-   отдельный чанк и подгружается после интерактивного текста. До его загрузки
-   на месте фона — статичный градиент ниже, тот же, что и с включённым
-   WebGL. Ничего не «прыгает»: линии просто проявляются на секунду позже.
+   Компонент декоративный (aria-hidden), грузится через lazy(): интерактивный
+   текст показывается раньше фона.
 
-   Правило на будущее: любой WebGL/canvas-фон на этой странице импортируется
-   только через lazy(). Прямой import снова утащит three в основной чанк. */
-const FloatingLines = lazy(() => import('../components/reactbits/FloatingLines'));
+   Правило на будущее: любой WebGL/canvas-фон импортируется только через
+   lazy(). Прямой import утащит графическую библиотеку в основной чанк. */
+const Prism = lazy(() => import('../components/reactbits/Prism'));
 
 function Bolt() {
   return (
@@ -43,26 +42,43 @@ export default function Hero() {
           розовый/синий из исходника react-bits. На мобильном (≤767px)
           компонент сам рисует один статичный кадр без rAF-цикла — тот же
           приём, что и в Orb/GradientWaves, там же объяснение почему. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[90vh] opacity-90">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[85vh]">
+        <SafeBackground>
         <Suspense fallback={null}>
-          <FloatingLines
-            enabledWaves={['top', 'middle', 'bottom']}
-            lineCount={[10, 15, 20]}
-            lineDistance={[8, 6, 4]}
-            bendRadius={5.0}
-            bendStrength={-0.5}
-            interactive
-            parallax
-            linesGradient={['#e4e7ec', '#b9bec7', '#4d84bf']}
+          {/* Конфигурация — ровно та, что дал владелец.
+              Добавлен только `suspendWhenOffscreen`: это штатный проп
+              компонента, и без него шейдер (100 шагов рейтрейса на пиксель
+              каждый кадр) продолжает считать все 10 000 пикселей прокрутки
+              после того, как первый экран ушёл из вида.
+              `saturation` — необязательный проп нашей копии: значение 0
+              уводит призму в монохром под палитру «Metal Noir», не трогая
+              ни геометрию, ни анимацию. Сейчас не задан — цвета как в
+              оригинале. */}
+          <Prism
+            animationType="rotate"
+            timeScale={0.5}
+            height={3.5}
+            baseWidth={5.5}
+            scale={3.6}
+            hueShift={0}
+            colorFrequency={1}
+            noise={0.5}
+            glow={1}
+            suspendWhenOffscreen
           />
         </Suspense>
+        </SafeBackground>
       </div>
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[90vh]"
         style={{
           background:
-            'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 35%, rgba(0,0,0,0.6) 75%, var(--color-ink) 100%)',
+            /* Свечение остаётся у верхней кромки, а зона заголовка уводится
+               в почти чёрный: раньше здесь стояло `transparent 35%`, и фон
+               проходил ровно под h1. Это и была причина, по которой заголовок
+               плохо читался. */
+            'linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.55) 38%, rgba(0,0,0,0.82) 78%, var(--color-ink) 100%)',
         }}
       />
       <div className="grid-bg pointer-events-none absolute inset-0 z-0 opacity-30 [mask-image:radial-gradient(ellipse_at_50%_0%,black,transparent_68%)]" />
@@ -92,7 +108,7 @@ export default function Hero() {
             Решение владельца 06.08.2026: заголовок без градиента и без
             пер-строчного акцента — обе строки одним сплошным цветом,
             шрифт — Unbounded (--font-display), «вырезной» геометрический. */}
-        <h1 className="w-full font-display text-h1 font-bold text-balance text-chalk">
+        <h1 className="w-full font-display text-h1 font-medium text-balance text-chalk">
           <span className="block">
             <SplitText
               text={hero.title}
@@ -172,21 +188,22 @@ export default function Hero() {
       <div className="relative mx-auto mt-stack w-full max-w-6xl px-5 md:px-8">
         <Reveal delay={0.1}>
           <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-4">
-            {stats.map(stat => {
-              // «~30 сек» читается как одно длинное число и съедает кегль на 390px.
-              // Разносим: значение — метрикой, единица — мелким нейтральным.
-              const [value, ...rest] = String(stat.display).split(' ');
-              const unit = rest.join(' ');
-              return (
-                <div key={stat.label} className="bg-ink-2 px-5 py-7 text-center md:py-8">
-                  <dt className="flex items-baseline justify-center gap-1.5 font-mono whitespace-nowrap">
-                    <span className="text-metric font-semibold text-chalk">{value}</span>
-                    {unit && <span className="text-fine text-mist">{unit}</span>}
-                  </dt>
-                  <dd className="mt-2.5 text-fine leading-snug text-fog">{stat.label}</dd>
-                </div>
-              );
-            })}
+            {stats.map(stat => (
+              // Значение — метрикой, приставка и единица — мелким нейтральным:
+              // «~1 час» одним куском съедает кегль на 390px.
+              <div key={stat.label} className="bg-ink-2 px-5 py-7 text-center md:py-8">
+                <dt className="flex items-baseline justify-center gap-1.5 font-mono whitespace-nowrap">
+                  {stat.prefix && <span className="text-h3 font-semibold text-mist">{stat.prefix}</span>}
+                  <CountUp
+                    to={stat.value}
+                    duration={1.1}
+                    className="text-metric font-semibold text-chalk tabular-nums"
+                  />
+                  {stat.unit && <span className="text-fine text-mist">{stat.unit}</span>}
+                </dt>
+                <dd className="mt-2.5 text-fine leading-snug text-fog">{stat.label}</dd>
+              </div>
+            ))}
           </dl>
         </Reveal>
       </div>

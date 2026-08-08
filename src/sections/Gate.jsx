@@ -1,5 +1,5 @@
 import Reveal from '../components/ui/Reveal';
-import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
+import { Section, Eyebrow, SectionTitle } from '../components/ui/Section';
 import { gate } from '../content/site';
 
 /**
@@ -17,7 +17,6 @@ export default function Gate() {
       <Reveal className="max-w-3xl">
         <Eyebrow>{gate.eyebrow}</Eyebrow>
         <SectionTitle>{gate.title}</SectionTitle>
-        <SectionLead>{gate.subtitle}</SectionLead>
       </Reveal>
 
       {/* Подложка: поворотная секция должна читаться как один довод, а не как

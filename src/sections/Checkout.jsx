@@ -209,7 +209,7 @@ export default function Checkout() {
     'pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full';
 
   return (
-    <Section id="checkout" className="bg-ink-2">
+    <Section id="checkout" tone="deep">
       <div className="relative overflow-hidden rounded-3xl border border-line bg-surface/50 p-6 md:p-12">
         <div
           aria-hidden="true"

@@ -35,28 +35,27 @@ export default function Agents() {
             ease="power3.out"
             perspective={800}
             creaseShading={0.45}
-            fontSize="clamp(1.75rem, 1.33rem + 1.95vw, 3rem)"
-            fontWeight={600}
+            fontSize="clamp(1.625rem, 1.36rem + 1.24vw, 2.5rem)"
+            fontWeight={500}
             color="#ffffff"
           />
         </h2>
       </Reveal>
 
-      {/* Локальная прокручиваемая область — своя высота, свой скролл (Lenis
-          привязан к этому контейнеру, не к window, см. ScrollStack.jsx),
-          страницу не трогает. */}
-      <Reveal delay={0.1} className="mt-stack">
-        <div style={{ height: '72vh', maxHeight: '640px' }}>
-          <ScrollStack itemDistance={90} itemStackDistance={26} baseScale={0.88} rotationAmount={0} blurAmount={0}>
-            {agents.items.map(item => (
-              <ScrollStackItem key={item.name} itemClassName="bg-surface border border-line">
-                <h3 className="text-card font-semibold text-chalk">{item.name}</h3>
-                <p className="mt-3 text-body text-fog">{item.text}</p>
-              </ScrollStackItem>
-            ))}
-          </ScrollStack>
-        </div>
-      </Reveal>
+      {/* Внутренней прокручиваемой области здесь больше нет: карточки липнут
+          к экрану на обычной прокрутке страницы (см. ScrollStack.jsx). Обёртка
+          с фиксированной высотой убрана вместе с ней — блок сам занимает
+          столько, сколько нужно карточкам. */}
+      <div className="mt-stack">
+        <ScrollStack itemDistance={20} itemStackDistance={14} itemScale={0.035} baseScale={0.9} pinTop={104}>
+          {agents.items.map(item => (
+            <ScrollStackItem key={item.name}>
+              <h3 className="text-card font-medium text-chalk">{item.name}</h3>
+              <p className="mt-3 max-w-[62ch] text-fine text-fog">{item.text}</p>
+            </ScrollStackItem>
+          ))}
+        </ScrollStack>
+      </div>
     </Section>
   );
 }

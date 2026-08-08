@@ -1,0 +1,36 @@
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+  --spot-x: 50%;
+  --spot-y: 50%;
+  --spot-opacity: 0;
+}
+
+/* Пятно — отдельный слой поверх фона, но под контентом.
+   Не влияет на попадание курсора и не перерисовывает содержимое. */
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--spot-opacity);
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    380px circle at var(--spot-x) var(--spot-y),
+    var(--spot-color),
+    transparent 70%
+  );
+}
+
+.spotlight-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Базовое состояние элемента — видимое: пятно только гасится, контент
+   не трогается вообще. */
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-card::before {
+    display: none;
+  }
+}
