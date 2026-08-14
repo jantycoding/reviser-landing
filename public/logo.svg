@@ -1,31 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 44" width="48" height="44">
   <!--
-    Фавикон. Тот же знак, что в шапке сайта (src/components/ui/Logo.jsx):
-    клодик, свёрнутый в неровный пятиугольник, палитра «Metal Noir».
-    Держи файл и компонент синхронными — правишь один, правь второй.
+    Фавикон = знак из src/components/ui/Logo.jsx (клодик, серый, 14.08.2026).
+    Глаза вырезаны белым под светлые панели вкладок. Правишь знак — правь оба.
   -->
-  <defs>
-    <linearGradient id="rv-logo-bg" x1="0" y1="0" x2="1" y2="1">
-      <!-- Metal Noir: серебро → белый → холодный металл, без цвета. -->
-      <stop offset="0%" stop-color="#e4e7ec" />
-      <stop offset="45%" stop-color="#b9bec7" />
-      <stop offset="100%" stop-color="#7d828c" />
-    </linearGradient>
-  </defs>
-
-  <!-- Тёмная плашка: серебро по белому фону вкладки не читается. -->
-  <rect width="32" height="32" rx="7" fill="#0A0C13" />
-
-  <!-- Неровный пятиугольник — пять точек с намеренно смещёнными углами. -->
-  <path d="M16 3.5L28 12l-3.6 15H7.6L4 12z" fill="url(#rv-logo-bg)" />
-
-  <!-- Тонкая внутренняя грань — намёк на лицо клодика, без деталей. -->
-  <path
-    d="M16 9.5l6.2 7.4-2.4 6.6h-7.6l-2.4-6.6z"
-    fill="none"
-    stroke="#000000"
-    stroke-width="1.1"
-    stroke-linejoin="round"
-    opacity="0.35"
-  />
+  <path d="M8 4H40V12H46V26H40V40H33V31H28V40H20V31H15V40H8V26H2V12H8Z" fill="#131417" />
+  <rect x="15" y="14" width="5.5" height="5.5" fill="#ffffff" />
+  <rect x="27.5" y="14" width="5.5" height="5.5" fill="#ffffff" />
 </svg>

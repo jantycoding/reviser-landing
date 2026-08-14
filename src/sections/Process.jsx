@@ -27,7 +27,7 @@ export default function Process() {
 
   return (
     <Section id="process">
-      <Reveal className="max-w-3xl">
+      <Reveal className="max-w-3xl blur-in">
         <Eyebrow>{process.eyebrow}</Eyebrow>
         <SectionTitle>{process.title}</SectionTitle>
         <SectionLead>{process.subtitle}</SectionLead>
@@ -42,7 +42,7 @@ export default function Process() {
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface font-mono text-fine font-semibold text-fog tabular-nums">
                   {step.n}
                 </span>
-                {i < last && <span className="mt-2 w-px flex-1 bg-line" />}
+                {i < last && <span className="step-line-v mt-2 w-px flex-1 bg-line" />}
               </div>
               <div className="pb-9">
                 <h3 className="text-card font-medium text-chalk">{step.title}</h3>
@@ -59,7 +59,7 @@ export default function Process() {
                 </span>
                 {/* Дотягивается до кружка следующего шага: зазора между
                     колонками нет, поэтому путь не рвётся. */}
-                {i < last && <span className="h-px flex-1 bg-line" />}
+                {i < last && <span className="step-line h-px flex-1 bg-line" />}
               </div>
               <h3 className="mt-5 text-card font-medium text-chalk">{step.title}</h3>
               <div className="mt-1.5 font-mono text-label tracking-[0.12em] text-mist uppercase">{step.time}</div>
@@ -75,7 +75,7 @@ export default function Process() {
       <Reveal delay={0.1} className="mt-stack">
         <a
           href={headerCta.href}
-          className="press inline-flex items-center justify-center rounded-xl bg-signal px-5 py-4 min-[400px]:px-7 text-body font-semibold whitespace-nowrap text-ink hover:-translate-y-0.5 hover:bg-signal-soft hover:shadow-[0_12px_28px_-14px_rgba(185,190,199,0.85)]"
+          className="press btn-sheen inline-flex items-center justify-center rounded-xl bg-signal px-5 py-4 min-[400px]:px-7 text-body font-semibold whitespace-nowrap text-ink hover:-translate-y-0.5 hover:bg-signal-soft hover:shadow-[0_12px_28px_-14px_rgba(185,190,199,0.85)]"
         >
           {headerCta.label}
         </a>

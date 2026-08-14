@@ -22,7 +22,7 @@ import { agents } from '../content/site';
 export default function Agents() {
   return (
     <Section id="agents">
-      <Reveal className="max-w-3xl">
+      <Reveal className="max-w-3xl blur-in">
         <Eyebrow>{agents.eyebrow}</Eyebrow>
         <h2 className="max-w-4xl text-pretty text-chalk sm:text-balance">
           <FoldText
@@ -47,11 +47,16 @@ export default function Agents() {
           с фиксированной высотой убрана вместе с ней — блок сам занимает
           столько, сколько нужно карточкам. */}
       <div className="mt-stack">
-        <ScrollStack itemDistance={20} itemStackDistance={14} itemScale={0.035} baseScale={0.9} pinTop={104}>
+        {/* itemScale=0: карточки одного размера, кромки стопки ложатся ровно —
+            жалоба владельца 14.08 на «неровности» была про инсет от масштаба. */}
+        {/* itemDistance 440: между карточками почти экран пустоты, поэтому в
+            кадре живёт ОДНА карточка — дочитал, докрутил, пришла следующая
+            (запрос владельца 14.08: «на секцию один приём заявок»). */}
+        <ScrollStack itemDistance={440} itemStackDistance={12} itemScale={0} baseScale={1} pinTop={120}>
           {agents.items.map(item => (
-            <ScrollStackItem key={item.name}>
-              <h3 className="text-card font-medium text-chalk">{item.name}</h3>
-              <p className="mt-3 max-w-[62ch] text-fine text-fog">{item.text}</p>
+            <ScrollStackItem key={item.name} itemClassName="text-center">
+              <h3 className="text-h3 font-semibold text-chalk">{item.name}</h3>
+              <p className="mx-auto mt-3 max-w-[60ch] text-body text-fog">{item.text}</p>
             </ScrollStackItem>
           ))}
         </ScrollStack>

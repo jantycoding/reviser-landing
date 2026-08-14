@@ -163,8 +163,10 @@ export default function Header() {
                 бургер» не помещался и выдавливал бургер за край экрана. Знак
                 остаётся кликабельным по иконке. */}
             {/* Худой начерк словесного знака — решение владельца 06.08.2026:
-                без приставки «ai», font-light вместо font-semibold. */}
-            <span className="hidden font-display text-[15px] font-light tracking-[-0.01em] text-chalk min-[360px]:inline">
+                без приставки «ai». Начерк уплотнён до font-semibold
+                14.08.2026 (запрос владельца, референс — шапка pleep):
+                тонкий знак рядом с серым клодиком терялся. */}
+            <span className="hidden font-display text-[16px] font-semibold tracking-[-0.01em] text-chalk min-[360px]:inline">
               {brand.name}
             </span>
           </a>

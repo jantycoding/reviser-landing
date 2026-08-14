@@ -2,8 +2,7 @@ import { Suspense, lazy } from 'react';
 import Reveal from '../components/ui/Reveal';
 import SafeBackground from '../components/ui/SafeBackground';
 import SplitText from '../components/reactbits/SplitText';
-import CountUp from '../components/reactbits/CountUp';
-import { hero, stats } from '../content/site';
+import { hero } from '../content/site';
 
 /* Фон первого экрана — Prism (react-bits, WebGL через ogl). Поставлен
    08.08.2026 по запросу владельца, заменил Aurora; та, в свою очередь,
@@ -15,7 +14,7 @@ import { hero, stats } from '../content/site';
 
    Правило на будущее: любой WebGL/canvas-фон импортируется только через
    lazy(). Прямой import утащит графическую библиотеку в основной чанк. */
-const Prism = lazy(() => import('../components/reactbits/Prism'));
+const Silk = lazy(() => import('../components/reactbits/Silk'));
 
 function Bolt() {
   return (
@@ -35,50 +34,38 @@ export default function Hero() {
        кнопка Safari), и человек, у которого первый экран схлопнулся в чёрный
        прямоугольник, страницу закрывает. Явный bg-ink гарантирует фон даже при
        потере слоя, а изоляция здесь ничего не держала: у детей свои z-индексы. */
-    <section id="top" className="relative w-full bg-ink clip-x pt-32 pb-4 md:pt-40 md:pb-8">
+    <section id="top" className="relative flex min-h-[100svh] w-full flex-col justify-center bg-ink clip-x pt-28 pb-16 md:pt-32">
+      {/* Герой на весь экран (референс — pleep): min-h-[100svh], контент
+          отцентрован по вертикали, шёлк заливает всю секцию, снизу вуаль сама
+          уходит в глухой белый — переход к секциям бесшовный. svh, а не vh:
+          на телефоне vh прыгает вместе с адресной строкой браузера. */}
       {/* Фон первого экрана — FloatingLines (react-bits, WebGL через three),
           решение владельца 06.08.2026, заменил Orb. Палитра линий —
           серебро → белый → тёмная синева («Metal Noir»), не дефолтные
           розовый/синий из исходника react-bits. На мобильном (≤767px)
           компонент сам рисует один статичный кадр без rAF-цикла — тот же
           приём, что и в Orb/GradientWaves, там же объяснение почему. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[85vh]">
+      {/* Фон — Silk (react-bits), белый шёлк. Настройки владельца дословно:
+          speed 10, scale 0.8, #ffffff, noiseIntensity 1.5, rotation 0.
+          Сменил чёрную призму 14.08.2026 — «многие бэкграунды не
+          адаптированы под белый, этот адаптирован». */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
         <SafeBackground>
-        <Suspense fallback={null}>
-          {/* Конфигурация — ровно та, что дал владелец.
-              Добавлен только `suspendWhenOffscreen`: это штатный проп
-              компонента, и без него шейдер (100 шагов рейтрейса на пиксель
-              каждый кадр) продолжает считать все 10 000 пикселей прокрутки
-              после того, как первый экран ушёл из вида.
-              `saturation` — необязательный проп нашей копии: значение 0
-              уводит призму в монохром под палитру «Metal Noir», не трогая
-              ни геометрию, ни анимацию. Сейчас не задан — цвета как в
-              оригинале. */}
-          <Prism
-            animationType="rotate"
-            timeScale={0.5}
-            height={3.5}
-            baseWidth={5.5}
-            scale={3.6}
-            hueShift={0}
-            colorFrequency={1}
-            noise={0.5}
-            glow={1}
-            suspendWhenOffscreen
-          />
-        </Suspense>
+          <Suspense fallback={null}>
+            <Silk speed={10} scale={0.8} color="#ffffff" noiseIntensity={1.5} rotation={0} />
+          </Suspense>
         </SafeBackground>
       </div>
+      {/* Вуаль: шёлк в тёмных гребнях уходит к ~20% яркости, тёмный текст на
+          нём проваливается. Полупрозрачный белый сверху выравнивает фон до
+          читаемого, внизу — глухой белый, чтобы секции начинались с чистого
+          листа. Никакой полосы перехода больше не нужно: шёлк сам светлый. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[90vh]"
+        className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            /* Свечение остаётся у верхней кромки, а зона заголовка уводится
-               в почти чёрный: раньше здесь стояло `transparent 35%`, и фон
-               проходил ровно под h1. Это и была причина, по которой заголовок
-               плохо читался. */
-            'linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.55) 38%, rgba(0,0,0,0.82) 78%, var(--color-ink) 100%)',
+            'linear-gradient(to bottom, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.45) 45%, rgba(255,255,255,0.75) 78%, #ffffff 100%)',
         }}
       />
       <div className="grid-bg pointer-events-none absolute inset-0 z-0 opacity-30 [mask-image:radial-gradient(ellipse_at_50%_0%,black,transparent_68%)]" />
@@ -108,24 +95,15 @@ export default function Hero() {
             Решение владельца 06.08.2026: заголовок без градиента и без
             пер-строчного акцента — обе строки одним сплошным цветом,
             шрифт — Unbounded (--font-display), «вырезной» геометрический. */}
-        <h1 className="w-full font-display text-h1 font-medium text-balance text-chalk">
-          <span className="block">
-            <SplitText
-              text={hero.title}
-              tag="span"
-              className="block"
-              splitType="words"
-              delay={40}
-              duration={0.7}
-              ease="power3.out"
-              from={{ opacity: 0, y: 34 }}
-              to={{ opacity: 1, y: 0 }}
-              threshold={0.05}
-              rootMargin="0px"
-              textAlign="center"
-            />
-          </span>
-          <span className="mt-1 block">
+        {/* Композиция по референсу владельца «Tempting + Switzer», в русской
+            локализации: первая строка — рукописный акцент (Marck Script —
+            каллиграфический с родной кириллицей; сам Tempting кириллицы не
+            имеет), вторая — тяжёлый гротеск Onest 800 (Switzer не имеет
+            надёжной кириллицы и отсутствует на Google Fonts). Строки слегка
+            перекрываются, как в референсе. */}
+        <h1 className="w-full text-balance text-chalk">
+          <span className="font-script -mb-2 block text-[clamp(1.5rem,1.2rem+1.5vw,2.25rem)] font-medium text-fog md:-mb-4">{hero.title}</span>
+          <span className="block font-display text-[clamp(2.375rem,1.75rem+3vw,4rem)] leading-[1.06] font-extrabold tracking-tight">
             <SplitText
               text={hero.titleAccent}
               tag="span"
@@ -176,7 +154,7 @@ export default function Hero() {
               href={hero.secondaryHref}
               className="flex items-center justify-center gap-2.5 rounded-xl border border-line bg-surface/60 px-6 py-4 text-body font-medium whitespace-nowrap text-chalk transition-colors hover:border-verify/50 hover:bg-surface-2"
             >
-              <span className="text-verify">
+              <span className="bolt-pulse text-verify">
                 <Bolt />
               </span>
               {hero.secondaryCta}
@@ -185,28 +163,14 @@ export default function Hero() {
         </Reveal>
       </div>
 
-      <div className="relative mx-auto mt-stack w-full max-w-6xl px-5 md:px-8">
-        <Reveal delay={0.1}>
-          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-4">
-            {stats.map(stat => (
-              // Значение — метрикой, приставка и единица — мелким нейтральным:
-              // «~1 час» одним куском съедает кегль на 390px.
-              <div key={stat.label} className="bg-ink-2 px-5 py-7 text-center md:py-8">
-                <dt className="flex items-baseline justify-center gap-1.5 font-mono whitespace-nowrap">
-                  {stat.prefix && <span className="text-h3 font-semibold text-mist">{stat.prefix}</span>}
-                  <CountUp
-                    to={stat.value}
-                    duration={1.1}
-                    className="text-metric font-semibold text-chalk tabular-nums"
-                  />
-                  {stat.unit && <span className="text-fine text-mist">{stat.unit}</span>}
-                </dt>
-                <dd className="mt-2.5 text-fine leading-snug text-fog">{stat.label}</dd>
-              </div>
-            ))}
-          </dl>
-        </Reveal>
-      </div>
+      {/* Плитка цифр (3 дня / 12 / ~1 час / 0 паролей) удалена 14.08.2026 по
+          запросу владельца: «слишком поверхностные, ничего не дают». Слот
+          зарезервирован под настоящие цифры эффекта после первых аудитов —
+          придумывать их нельзя, красная линия №6. CountUp остаётся в
+          components/reactbits и подключится обратно одной строкой. */}
+
+      {/* Растворение чёрного героя в белую страницу — «плавный переход:
+          чёрный, а дальше белый». Полоса лежит поверх призмы (z-10). */}
     </section>
   );
 }

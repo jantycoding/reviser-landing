@@ -21,27 +21,37 @@ import { compare } from '../content/site';
  * проекта «никакого overflow-x на <html>» не нарушается.
  */
 
+/* Семафорные цвета — прямой запрос владельца 14.08.2026 (референс — pleep):
+ * зелёная галочка в мягком круге, красный крестик. Это осознанное исключение
+ * из правила «три цвета»: зелёный и красный живут ТОЛЬКО в этой таблице как
+ * универсальный код «да/нет» и в других местах страницы не появляются. */
 function Yes() {
   return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4 text-verify" fill="none" aria-hidden="true">
-      <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#e6f4ea]">
+      <svg viewBox="0 0 20 20" className="h-4 w-4 text-[#1a9e4b]" fill="none" aria-hidden="true">
+        <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
   );
 }
 
 function No() {
   return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4 text-line-2" fill="none" aria-hidden="true">
-      <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
+    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#fdecec]">
+      <svg viewBox="0 0 20 20" className="h-4 w-4 text-[#d93025]" fill="none" aria-hidden="true">
+        <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+    </span>
   );
 }
 
 function Partial() {
   return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4 text-mist" fill="none" aria-hidden="true">
-      <path d="M5 10h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
+    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-surface">
+      <svg viewBox="0 0 20 20" className="h-4 w-4 text-mist" fill="none" aria-hidden="true">
+        <path d="M5 10h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
+    </span>
   );
 }
 
@@ -60,7 +70,7 @@ function Cell({ value }) {
 export default function Compare() {
   return (
     <Section id="compare">
-      <Reveal className="max-w-3xl">
+      <Reveal className="max-w-3xl blur-in">
         <Eyebrow>{compare.eyebrow}</Eyebrow>
         <SectionTitle>{compare.title}</SectionTitle>
         <SectionLead>{compare.subtitle}</SectionLead>
@@ -85,7 +95,7 @@ export default function Compare() {
                        и белый текст. Тот же приём, что у референса; он делает
                        чтение таблицы направленным, без единого лишнего цвета. */
                     className={`px-4 py-4 text-center text-fine font-medium whitespace-nowrap ${
-                      i === 0 ? 'bg-surface-2 text-chalk' : 'bg-surface text-mist'
+                      i === 0 ? 'bg-signal text-ink' : 'bg-surface text-mist'
                     }`}
                   >
                     {col}
@@ -98,7 +108,7 @@ export default function Compare() {
                 <tr key={row.label} className="border-t border-line">
                   <th
                     scope="row"
-                    className="sticky left-0 z-10 bg-ink px-5 py-4 text-fine font-normal text-fog"
+                    className="sticky left-0 z-10 bg-ink px-5 py-4 text-body font-medium text-chalk"
                   >
                     {row.label}
                   </th>

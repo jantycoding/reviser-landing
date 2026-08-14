@@ -62,13 +62,13 @@ export default function Platforms() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="w-full border-y border-line bg-ink-2 py-stack clip-x">
+    <section ref={sectionRef} className="w-full border-y border-line py-stack clip-x">
       {/* Заголовок выключен влево по той же оси max-w-6xl + px-8, что и все
           остальные секции. Центрированный блок посреди левовыключенной
           страницы заставлял глаз на каждом экране заново искать начало строки. */}
       <div className="px-5 md:px-8">
         <Reveal className="mx-auto mb-9 w-full max-w-6xl">
-          <h2 className="text-h3 font-semibold text-chalk">{platforms.title}</h2>
+          <h2 className="text-h2 font-medium text-chalk">{platforms.title}</h2>
           <p className="mt-2.5 max-w-[52ch] text-body text-fog">{platforms.note}</p>
         </Reveal>
       </div>

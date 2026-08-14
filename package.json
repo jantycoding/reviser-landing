@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "doctor": "npx react-doctor@latest",
+    "lint:hooks": "eslint src"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -28,8 +30,13 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "eslint": "^10.8.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "oxlint": "^1.75.0",
     "playwright": "^1.62.1",
+    "react-doctor": "^0.9.12",
+    "react-scan": "^0.5.7",
+    "shadcn": "^4.18.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0"
   }

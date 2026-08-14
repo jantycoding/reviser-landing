@@ -10,19 +10,17 @@
  * закрыть страницу до того, как человек дошёл до цены.
  */
 /**
- * @param {'base'|'raised'|'deep'} tone — плоскость секции. Соседние секции
- * идут разными планами: `base` — фон страницы (ink), `raised` — приподнятый
- * (ink-2) с волосяной верхней границей и мягким светом у кромки, `deep` —
- * утопленный, для низа страницы. Это единственный способ дать чёрному
- * глубину, не добавляя цветов сверх трёх (палитра «Metal Noir»).
+ * @param {'base'|'raised'|'deep'} tone — принимается для совместимости с
+ * вызовами, но ФОНА БОЛЬШЕ НЕ МЕНЯЕТ. Решение владельца 14.08.2026: единый
+ * чистый чёрный во всех секциях, без чередования планов и без света у кромки.
+ * Проп оставлен, чтобы не править девять секций ради отката — если глубину
+ * попросят вернуть, включается здесь одной строкой.
  */
 export function Section({ id, children, className = '', tight = false, tone = 'base' }) {
+  void tone;
   const rhythm = tight ? 'py-section-tight' : 'py-section';
-  const plane =
-    tone === 'raised' ? 'bg-ink-2 border-t border-line/70' : tone === 'deep' ? 'plane-deep border-t border-line/70' : '';
   return (
-    <section id={id} className={`relative w-full px-5 ${rhythm} md:px-8 ${plane} ${className}`}>
-      {tone !== 'base' && <span aria-hidden="true" className="section-glow" />}
+    <section id={id} className={`relative w-full px-5 ${rhythm} md:px-8 ${className}`}>
       <div className="relative mx-auto w-full max-w-6xl">{children}</div>
     </section>
   );

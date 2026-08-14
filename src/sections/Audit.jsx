@@ -33,54 +33,56 @@ function ColumnTitle({ n, children }) {
 }
 
 /**
- * Карта направлений аудита.
+ * Направления аудита — роадмап (14.08.2026, запрос владельца: «центрировано,
+ * направление идёт друг за другом»).
  *
- * Была решётка пилюль 2×6 / 3×4. Проблема, которую она создавала: подписи
- * разной длины («Продажи и воронка» против «Реклама и стоимость сделки»)
- * переносились на вторую строку по-разному, ряды получались разной высоты, и
- * блок читался как случайно рассыпанные ярлыки, а не как «ровно 12
- * направлений одного разбора».
- *
- * Здесь — ветвление от одного узла: слева «Аудит», справа два столбца веток
- * с общим стволом. Высота строки фиксирована, поэтому интервалы одинаковые
- * при любой длине подписи. На узком экране узел уезжает наверх, ствол — влево,
- * ветки идут одной колонкой: та же схема, без горизонтальной прокрутки.
+ * Вертикальный ствол по центру (на телефоне — слева), направления нанизаны
+ * на него зигзагом и проявляются по одному со ступенчатой задержкой. Сверху —
+ * узел входа, снизу — чёрная капсула «Отчёт на 3-й рабочий день»: путь
+ * заканчивается тем, за что человек платит.
  */
 function AreasMap({ areas }) {
-  const half = Math.ceil(areas.length / 2);
-  const columns = [areas.slice(0, half), areas.slice(half)];
-
   return (
-    <div className="mt-6 grid gap-6 md:grid-cols-[auto_1fr] md:items-center md:gap-8">
-      {/* Узел, от которого расходятся ветки */}
-      <div className="flex items-center gap-4 md:flex-col md:items-start">
-        <div className="rounded-2xl border border-line bg-surface px-5 py-4">
-          <div className="font-mono text-label tracking-[0.14em] text-mist uppercase">Аудит</div>
-          <div className="mt-1 font-display text-h3 leading-none font-medium text-chalk tabular-nums">
-            {areas.length}
-          </div>
-          <div className="text-fine text-fog">направлений</div>
-        </div>
+    <div className="relative mx-auto mt-10 max-w-2xl">
+      {/* Узел входа */}
+      <div className="relative z-10 mb-5 flex justify-center pl-8 md:pl-0">
+        <span className="rounded-full border border-line bg-surface px-5 py-2.5 font-mono text-label tracking-[0.14em] text-fog uppercase">
+          Аудит · {areas.length} направлений
+        </span>
       </div>
 
-      {/* Ствол + ветки. Ствол — левая граница списка, ветка — короткая черта. */}
-      <div className="grid gap-x-8 gap-y-0 sm:grid-cols-2">
-        {columns.map((column, ci) => (
-          <ul key={ci} className="border-l border-line">
-            {column.map(area => (
-              <li key={area} className="group flex min-h-11 items-center gap-3 pl-0">
-                {/* Ветка: черта от ствола к точке. */}
-                <span aria-hidden="true" className="h-px w-5 shrink-0 bg-line transition-colors group-hover:bg-verify/70" />
-                <span
-                  aria-hidden="true"
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-line-2 transition-colors group-hover:bg-verify"
-                />
-                <span className="text-fine text-fog transition-colors group-hover:text-chalk">{area}</span>
-              </li>
-            ))}
-          </ul>
+      {/* Ствол: слева на телефоне, по центру с md */}
+      <span
+        aria-hidden="true"
+        className="absolute top-12 bottom-14 left-[7px] w-px bg-line-2 md:left-1/2 md:-translate-x-1/2"
+      />
+
+      <ol>
+        {areas.map((area, i) => (
+          <Reveal key={area} as="li" delay={Math.min(i * 0.05, 0.45)} className="relative list-none">
+            <span
+              aria-hidden="true"
+              className="absolute top-1/2 left-[3px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-line-2 bg-ink md:left-1/2 md:-translate-x-1/2"
+            />
+            <div
+              className={`py-2 pl-8 md:w-1/2 md:py-2.5 ${
+                i % 2 ? 'md:ml-auto md:pl-10' : 'md:pr-10 md:pl-0 md:text-right'
+              }`}
+            >
+              <span className="text-body text-fog">{area}</span>
+            </div>
+          </Reveal>
         ))}
-      </div>
+      </ol>
+
+      {/* Финал пути */}
+      <Reveal delay={0.5}>
+        <div className="relative z-10 mt-5 flex justify-center pl-8 md:pl-0">
+          <span className="rounded-full bg-signal px-5 py-2.5 text-fine font-medium text-ink">
+            Отчёт на 3-й рабочий день
+          </span>
+        </div>
+      </Reveal>
     </div>
   );
 }
@@ -88,7 +90,7 @@ function AreasMap({ areas }) {
 export default function Audit() {
   return (
     /* tight: «Ворота → Аудит» — один аргумент, а не два отдельных блока. */
-    <Section id="audit" tone="raised" tight>
+    <Section id="audit">
       {/* Правый столбец с параметрами («3 рабочих дня / 12 направлений /
           ~1 час вашего времени / CRM не обязательна») снят по запросу
           владельца 08.08.2026. Три пункта из четырёх дословно повторяли
@@ -96,7 +98,7 @@ export default function Audit() {
           Единственный уникальный — «CRM не обязательна»; он снимает реальное
           возражение половины аудитории (автомойки, пекарни, салоны без CRM),
           и его место — в FAQ, откуда его сюда и подняли. */}
-      <Reveal className="max-w-3xl">
+      <Reveal className="max-w-3xl blur-in">
         <Eyebrow>{audit.eyebrow}</Eyebrow>
         <SectionTitle>{bindNumbers(audit.title)}</SectionTitle>
         <SectionLead>{audit.subtitle}</SectionLead>
@@ -109,7 +111,7 @@ export default function Audit() {
           <p className="max-w-[62ch] text-body text-pretty text-chalk">{audit.standalone}</p>
           <a
             href={headerCta.href}
-            className="press shrink-0 rounded-xl bg-signal px-5 py-4 min-[400px]:px-7 text-body font-semibold whitespace-nowrap text-ink hover:-translate-y-0.5 hover:bg-signal-soft hover:shadow-[0_12px_28px_-14px_rgba(185,190,199,0.85)]"
+            className="press btn-sheen shrink-0 rounded-xl bg-signal px-5 py-4 min-[400px]:px-7 text-body font-semibold whitespace-nowrap text-ink hover:-translate-y-0.5 hover:bg-signal-soft hover:shadow-[0_12px_28px_-14px_rgba(185,190,199,0.85)]"
           >
             {headerCta.label}
           </a>
@@ -125,10 +127,10 @@ export default function Audit() {
           <ColumnTitle n="01">Что получаете на выходе</ColumnTitle>
         </Reveal>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {audit.outputs.map((out, i) => (
             <Reveal key={out.title} delay={0.06 * i}>
-              <SpotlightCard className="h-full rounded-2xl border border-line bg-surface/60 p-6 transition-colors hover:border-line-2 md:p-7">
+              <SpotlightCard className="h-full rounded-2xl border border-line bg-surface/60 p-7 transition-colors hover:border-line-2 md:p-8">
                 <div className="flex items-center gap-2.5">
                   <Check />
                   <div className="text-card font-medium text-chalk">{out.title}</div>

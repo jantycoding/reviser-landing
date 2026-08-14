@@ -11,16 +11,16 @@
  * ================================================================== */
 @theme {
   /* --- 1. Нейтраль — чистый чёрный фон ------------------------------ */
-  --color-ink: #000000;
-  --color-ink-2: #0a0a0c;
-  --color-surface: #141518;
-  --color-surface-2: #1c1d21;
-  --color-line: #26272b;
-  --color-line-2: #33343a;
+  --color-ink: #ffffff;
+  --color-ink-2: #f7f7f9;
+  --color-surface: #f2f3f5;
+  --color-surface-2: #e9eaee;
+  --color-line: #e2e3e8;
+  --color-line-2: #cfd2d8;
   /* mist 7.97:1, fog 13.00:1 на чёрном — обе выше порога AA 4.5:1. */
-  --color-mist: #9aa0a8;
-  --color-fog: #c7ccd2;
-  --color-chalk: #ffffff;
+  --color-mist: #6f747b;
+  --color-fog: #46494f;
+  --color-chalk: #0b0c0e;
 
   /* --- 2. Signal — серебристо-металлический -------------------------
      Флэт-токен для текста/бордеров/мелких заливок (11.25:1 на чёрном).
@@ -28,16 +28,16 @@
      градиент — см. правило `.bg-signal` в конце файла. Кнопка на такой
      светлой заливке требует ТЁМНЫЙ текст (`text-ink`), не `text-white` —
      это единственное на что нужно проверять при добавлении новой кнопки. */
-  --color-signal: #b9bec7;
-  --color-signal-soft: #e4e7ec;
-  --color-signal-dim: #1a1a1c;
+  --color-signal: #131417;
+  --color-signal-soft: #2c2e33;
+  --color-signal-dim: #eef0f3;
 
   /* --- 3. Verify — профессиональный синий ---------------------------
      #4d84bf на #000000 = 5.37:1, проходит AA. Более тёмная синева
      (Nuit Blanche-подобная) на чистом чёрном уходит ниже 2:1 — здесь так
      низко не годится, фон темнее прежнего Midnight Mirage. */
-  --color-verify: #4d84bf;
-  --color-verify-dim: #0d1b2a;
+  --color-verify: #2f6cb0;
+  --color-verify-dim: #e8f0f9;
 
   /* Псевдонимы для компонентов (AgentSwarm, FloatingLines, Logo). */
   --color-iris: var(--color-signal);
@@ -50,7 +50,7 @@
      Unbounded — «вырезной», геометрический дисплейный шрифт для h1/h2:
      решение владельца 06.08.2026, обычный текст остаётся на Inter. */
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'Unbounded', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Onest', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
   /* --- Флюидная типографическая шкала ------------------------------
@@ -144,58 +144,115 @@ html {
 }
 
 /* ------------------------------------------------------------------ *
- * Глубина чёрного (08.08.2026, запрос владельца)
+ * Плоский чёрный (14.08.2026, запрос владельца)
  *
- * Проблема: #000000 одной заливкой на 11 000 пикселей читается не как цвет,
- * а как отсутствие изображения — «пустой» экран. Новых цветов при этом
- * добавлять нельзя, палитра «Metal Noir» закрыта тремя.
+ * Отменяет «глубину чёрного» от 08.08. Тогда просили фактуру: зерно поверх
+ * страницы, чередование планов ink/ink-2 по секциям, свет у верхней кромки.
+ * Сегодня владелец говорит, что получилось тускло, и просит единый чистый
+ * чёрный во всех секциях.
  *
- * Решение — три слоя, все из существующих токенов:
- *   1. Зерно — очень слабый шум поверх всей страницы. Именно оно превращает
- *      чёрный из пустоты в материал: у плоскости появляется фактура.
- *   2. Планы — секции чередуют ink и ink-2. Смена плоскости работает как
- *      знак препинания: глаз понимает, что началась новая мысль.
- *   3. Свет — мягкое пятно у верхней кромки поднятой секции. Даёт источник
- *      света, из-за которого плоскость читается объёмной, а не наклеенной.
+ * Убрано: зерно, свет у кромки, разница фонов между секциями.
+ * Оставлено: подложки карточек (`surface`, `surface-2`) — они светлее фона
+ * намеренно, иначе карточка перестаёт читаться как карточка.
  * ------------------------------------------------------------------ */
 
-/* 1. Зерно. Слой фиксированный, некликабельный, композиторский — не вызывает
-   перерисовки контента при скролле. Плотность подобрана так, чтобы на тексте
-   шум был незаметен, а на больших пустых плоскостях — читался. */
-body::after {
+/* ------------------------------------------------------------------ *
+ * Светлая тема (14.08.2026, решение владельца)
+ *
+ * Страница белая, референс — pleep. Инверсия сделана ЧЕРЕЗ ТОКЕНЫ, а не
+ * правкой классов: `ink` всегда значит «фон страницы», `chalk` — «основной
+ * текст», `signal` — «действие». Раньше это были чёрный/белый/серебро,
+ * теперь белый/почти-чёрный/чёрный. Ни один компонент менять не пришлось.
+ *
+ * Первый экран остаётся ЧЁРНЫМ (призма живёт на чёрном): секция героя несёт
+ * класс `scope-dark`, который локально возвращает тёмные значения токенов.
+ * Внизу героя — полоса растворения в белый, см. Hero.jsx.
+ * ------------------------------------------------------------------ */
+/* Акцентная строка заголовка героя (референс «Tempting + Switzer»).
+   Marck Script забракован владельцем 14.08. Честное ограничение: люксовых
+   каллиграфических скриптов с кириллицей на Google Fonts нет — Tempting
+   кириллицу не имеет вовсе. Ближайший премиальный сосед — Playfair Display
+   Italic: высококонтрастная элегантная италика с родной кириллицей. */
+.font-script {
+  font-family: 'Playfair Display', 'Onest', serif;
+  font-style: italic;
+  letter-spacing: 0.01em;
+}
+
+.scope-dark {
+  --color-ink: #000000;
+  --color-ink-2: #0a0a0c;
+  --color-surface: #141518;
+  --color-surface-2: #1c1d21;
+  --color-line: #26272b;
+  --color-line-2: #33343a;
+  --color-mist: #9aa0a8;
+  --color-fog: #c7ccd2;
+  --color-chalk: #ffffff;
+  /* Кнопка на чёрном герое — светлая, с тёмным текстом (text-ink → #000). */
+  --color-signal: #f2f3f5;
+  --color-signal-soft: #ffffff;
+  --color-verify: #4d84bf;
+}
+
+/* Молния на «Внедрить ИИ-агентов» — мягкий электрический пульс.
+   Только opacity и drop-shadow: композитор, без перерисовок. */
+@keyframes bolt-pulse {
+  0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 0 rgba(77, 132, 191, 0)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 7px rgba(77, 132, 191, 0.85)); }
+}
+.bolt-pulse { animation: bolt-pulse 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .bolt-pulse { animation: none; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Мелкие анимации (14.08.2026, запрос владельца: «приятные, не перегружают»)
+ *
+ * Все три следуют правилу «базовое состояние — видимое»: прячет только
+ * класс .is-armed, который ставит JS (Reveal). Нет JS — нет прятанья.
+ * ------------------------------------------------------------------ */
+
+/* Заголовок секции проявляется из лёгкого размытия. Вешается классом
+   blur-in на Reveal-обёртку шапки секции; перебивает rv-up специфичностью. */
+.is-armed.blur-in { opacity: 0; }
+.is-armed.blur-in.is-in { animation: rv-blur 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+@keyframes rv-blur {
+  from { opacity: 0; transform: translateY(10px); filter: blur(10px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* Линия пути в «Как проходит» дорисовывается от шага к шагу. */
+.step-line { transform-origin: left center; }
+.step-line-v { transform-origin: center top; }
+.is-armed .step-line { transform: scaleX(0); }
+.is-armed .step-line-v { transform: scaleY(0); }
+.is-armed.is-in .step-line { animation: step-draw-x 0.55s ease 0.2s forwards; }
+.is-armed.is-in .step-line-v { animation: step-draw-y 0.55s ease 0.2s forwards; }
+@keyframes step-draw-x { to { transform: scaleX(1); } }
+@keyframes step-draw-y { to { transform: scaleY(1); } }
+
+/* Редкий блик по чёрной кнопке (аналог ShinyText из react-bits, но на
+   заливке): раз в ~6 секунд, а не непрерывно — глазу приятно, не мигает. */
+.btn-sheen { position: relative; overflow: hidden; }
+.btn-sheen::after {
   content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  pointer-events: none;
-  opacity: 0.032;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-}
-
-/* 3. Свет у верхней кромки секции. Обычный элемент в потоке до контента —
-   поэтому ничего не перекрывает и не требует игр с z-index. */
-.section-glow {
   position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 20rem;
+  inset: 0;
   pointer-events: none;
-  background: radial-gradient(115% 100% at 50% 0%, rgba(185, 190, 199, 0.05), transparent 70%);
+  transform: translateX(-130%);
+  background: linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.22) 50%, transparent 58%);
+  animation: btn-sheen 6s ease-in-out 2s infinite;
 }
-
-/* Нижняя кромка страницы: чёрный уходит чуть глубже, чем фон секций, —
-   низ страницы перестаёт выглядеть обрезанным. */
-.plane-deep {
-  background-color: #050506;
+@keyframes btn-sheen {
+  0%, 60% { transform: translateX(-130%); }
+  80%, 100% { transform: translateX(130%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Зерно статично, но при запросе на минимум эффектов убираем и его. */
-  body::after {
-    display: none;
-  }
+  .is-armed.blur-in { opacity: 1; animation: none; }
+  .step-line, .step-line-v { transform: none !important; animation: none !important; }
+  .btn-sheen::after { animation: none; }
 }
 
 body {
@@ -502,7 +559,11 @@ a {
  * Tailwind-утилиты `.bg-signal` — не нужно бороться за specificity.
  */
 .bg-signal {
-  background-image: linear-gradient(135deg, #f4f5f7 0%, #d6dade 32%, #b9bec7 60%, #888d97 100%);
+  /* Градиент снят 14.08.2026 (запрос владельца): «убрать серебристый перелив,
+     сделать нейтрально и минималистично». Осталась плоская заливка токеном.
+     Правило оставлено пустым намеренно — оно перебивает Tailwind-утилиту, и
+     если градиент когда-нибудь вернут, менять надо здесь, а не искать по коду. */
+  background-image: none;
 }
 .hover\:bg-signal-soft:hover {
   background-image: linear-gradient(135deg, #ffffff 0%, #eef0f2 40%, #d6dade 100%);
