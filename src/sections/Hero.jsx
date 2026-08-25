@@ -1,7 +1,6 @@
 import { Suspense, lazy } from 'react';
 import Reveal from '../components/ui/Reveal';
 import SafeBackground from '../components/ui/SafeBackground';
-import SplitText from '../components/reactbits/SplitText';
 import { hero } from '../content/site';
 
 /* Фон первого экрана — Prism (react-bits, WebGL через ogl). Поставлен
@@ -80,46 +79,44 @@ export default function Hero() {
           <span className="text-fine font-medium text-fog">{hero.badge}</span>
         </div>
 
-        {/* SplitText (react-bits, GSAP) — появление h1 по буквам, не по
-            словам: словное разбиение ломало перенос строк на узком экране
-            (атомарные inline-block боксы наезжали друг на друга), поэтому
-            строки уже разведены на отдельные <span className="block">.
-            Разбивка по буквам (splitType="chars") здесь несовместима с
-            Unbounded: у него глиф заметно шире, чем у Inter, и вторая фраза
-            перестала помещаться в одну строку — при переносе ВНУТРИ одного
-            SplitText-таргета атомарные inline-block-боксы букв налезали друг
-            на друга между «строкой» переноса и следующей строкой заголовка.
-            Разбивка по словам (splitType="words") — те же слова остаются
-            целыми блоками, поэтому браузер переносит их как обычный текст,
-            без наложения.
-            Решение владельца 06.08.2026: заголовок без градиента и без
-            пер-строчного акцента — обе строки одним сплошным цветом,
-            шрифт — Unbounded (--font-display), «вырезной» геометрический. */}
-        {/* Композиция по референсу владельца «Tempting + Switzer», в русской
-            локализации: первая строка — рукописный акцент (Marck Script —
-            каллиграфический с родной кириллицей; сам Tempting кириллицы не
-            имеет), вторая — тяжёлый гротеск Onest 800 (Switzer не имеет
-            надёжной кириллицы и отсутствует на Google Fonts). Строки слегка
-            перекрываются, как в референсе. */}
-        <h1 className="w-full text-balance text-chalk">
-          <span className="font-script -mb-2 block text-[clamp(1.5rem,1.2rem+1.5vw,2.25rem)] font-medium text-fog md:-mb-4">{hero.title}</span>
-          <span className="block font-display text-[clamp(2.375rem,1.75rem+3vw,4rem)] leading-[1.06] font-extrabold tracking-tight">
-            <SplitText
-              text={hero.titleAccent}
-              tag="span"
-              className="block"
-              splitType="words"
-              delay={40}
-              duration={0.7}
-              ease="power3.out"
-              from={{ opacity: 0, y: 34 }}
-              to={{ opacity: 1, y: 0 }}
-              threshold={0.05}
-              rootMargin="0px"
-              textAlign="center"
-            />
-          </span>
-        </h1>
+        {/* ── Заголовок ────────────────────────────────────────────────
+            Правки 25.08.2026 по замечаниям владельца.
+
+            1. ТЕКСТ. «которая оптимизирует бизнес» → «которая укажет, где ваш
+               бизнес теряет деньги». Первое описывает нас, второе — его
+               ситуацию, и называет её деньгами, а не абстракцией.
+
+            2. ШРИФТ второй строки: font-hero (Manrope 800) вместо font-display.
+               Это роль «Switzer Extrabold» из присланного референса; сам
+               Switzer кириллицы не содержит вовсе — проверено по cmap.
+
+            3. РАЗМЕР первой строки поднят с clamp(1.5→2.25rem) до
+               clamp(1.875→3rem): владелец сказал, что она слишком мелкая.
+
+            4. ИНТЕРВАЛ. Была пара отрицательных margin (-mb-2 / md:-mb-4) в
+               rem поверх двух clamp-размеров, которые растут с РАЗНОЙ
+               скоростью. Поэтому зазор между строками гулял по ширине экрана,
+               и заголовок читался как две несвязанные фразы. Теперь зазор
+               задан в em от кегля второй строки — он масштабируется вместе с
+               ней и на любой ширине выглядит одинаково.
+
+            5. SplitText снят со второй строки. Он оборачивал КАЖДОЕ СЛОВО в
+               inline-block, из-за чего пробелы между словами переставали быть
+               обычными пробелами и вставали неровно — ровно та «вырванность
+               из контекста», на которую жаловался владелец. Обычный текст
+               браузер разбивает и переносит сам, интервалы получаются
+               идентичными по определению. Появление осталось — целым блоком
+               через Reveal, без GSAP на первом экране. */}
+        <Reveal className="w-full blur-in">
+          <h1 className="w-full text-balance text-chalk">
+            <span className="font-script block text-[clamp(1.875rem,1.4rem+2.1vw,3rem)] leading-[1.12] font-medium text-fog">
+              {hero.title}
+            </span>
+            <span className="mt-[0.06em] block font-hero text-[clamp(2.125rem,1.5rem+2.8vw,3.5rem)] leading-[1.05] font-extrabold tracking-[-0.02em]">
+              {hero.titleAccent}
+            </span>
+          </h1>
+        </Reveal>
 
         {/* Один связный абзац вместо пилюль — формат по референсу владельца
             (06.08.2026): крупный заголовок + один подзаголовок-абзац под ним. */}

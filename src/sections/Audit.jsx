@@ -43,41 +43,60 @@ function ColumnTitle({ n, children }) {
  */
 function AreasMap({ areas }) {
   return (
-    <div className="relative mx-auto mt-10 max-w-2xl">
+    <div className="relative mx-auto mt-10 max-w-3xl">
       {/* Узел входа */}
-      <div className="relative z-10 mb-5 flex justify-center pl-8 md:pl-0">
+      <div className="relative z-10 mb-6 flex justify-center">
         <span className="rounded-full border border-line bg-surface px-5 py-2.5 font-mono text-label tracking-[0.14em] text-fog uppercase">
           Аудит · {areas.length} направлений
         </span>
       </div>
 
-      {/* Ствол: слева на телефоне, по центру с md */}
+      {/* Ствол. Слева на телефоне, по центру с md. */}
       <span
         aria-hidden="true"
-        className="absolute top-12 bottom-14 left-[7px] w-px bg-line-2 md:left-1/2 md:-translate-x-1/2"
+        className="absolute top-14 bottom-16 left-[9px] w-px bg-line-2 md:left-1/2 md:-translate-x-1/2"
       />
 
-      <ol>
-        {areas.map((area, i) => (
-          <Reveal key={area} as="li" delay={Math.min(i * 0.05, 0.45)} className="relative list-none">
-            <span
-              aria-hidden="true"
-              className="absolute top-1/2 left-[3px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-line-2 bg-ink md:left-1/2 md:-translate-x-1/2"
-            />
-            <div
-              className={`py-2 pl-8 md:w-1/2 md:py-2.5 ${
-                i % 2 ? 'md:ml-auto md:pl-10' : 'md:pr-10 md:pl-0 md:text-right'
-              }`}
-            >
-              <span className="text-body text-fog">{area}</span>
-            </div>
-          </Reveal>
-        ))}
+      <ol className="space-y-1.5">
+        {areas.map((area, i) => {
+          const right = i % 2 === 1;
+          return (
+            <Reveal key={area} as="li" delay={Math.min(i * 0.045, 0.4)} className="relative list-none">
+              {/* Узел на стволе */}
+              <span
+                aria-hidden="true"
+                className="absolute top-1/2 left-[5px] z-10 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-line-2 bg-ink md:left-1/2 md:-translate-x-1/2"
+              />
+              {/* СОЕДИНИТЕЛЬ — то, чего не хватало. Раньше подпись висела в
+                  сорока пикселях от ствола, ничем с ним не связанная, и глазу
+                  не за что было зацепиться: двенадцать строк читались как
+                  список, а не как карта. Теперь от узла к плашке идёт
+                  короткая горизонтальная линия — ветка. */}
+              <span
+                aria-hidden="true"
+                className={`absolute top-1/2 h-px w-5 bg-line-2 md:w-8 ${
+                  right ? 'left-[9px] md:left-1/2' : 'left-[9px] md:right-1/2 md:left-auto'
+                }`}
+              />
+              <div
+                className={`py-1 pl-9 md:w-1/2 md:py-1.5 ${
+                  right ? 'md:ml-auto md:pl-10' : 'md:pr-10 md:pl-0 md:text-right'
+                }`}
+              >
+                {/* Плашка вместо голого текста: у направления появляется
+                    граница, и взгляд получает конечную точку ветки. */}
+                <span className="inline-block rounded-lg border border-line bg-ink px-3 py-1.5 text-fine text-fog transition-colors hover:border-line-2 hover:text-chalk">
+                  {area}
+                </span>
+              </div>
+            </Reveal>
+          );
+        })}
       </ol>
 
       {/* Финал пути */}
       <Reveal delay={0.5}>
-        <div className="relative z-10 mt-5 flex justify-center pl-8 md:pl-0">
+        <div className="relative z-10 mt-6 flex justify-center">
           <span className="rounded-full bg-signal px-5 py-2.5 text-fine font-medium text-ink">
             Отчёт на 3-й рабочий день
           </span>
@@ -104,19 +123,6 @@ export default function Audit() {
         <SectionLead>{audit.subtitle}</SectionLead>
       </Reveal>
 
-      {/* «Аудит — законченный продукт» — ответ на страх «меня втягивают в
-          воронку». Снимать его надо ДО перечисления направлений и цены. */}
-      <Reveal delay={0.08}>
-        <div className="mt-stack flex flex-col items-start justify-between gap-6 rounded-2xl border border-line bg-surface/50 p-6 md:flex-row md:items-center md:p-8">
-          <p className="max-w-[62ch] text-body text-pretty text-chalk">{audit.standalone}</p>
-          <a
-            href={headerCta.href}
-            className="press btn-sheen shrink-0 rounded-xl bg-signal px-5 py-4 min-[400px]:px-7 text-body font-semibold whitespace-nowrap text-ink hover:-translate-y-0.5 hover:bg-signal-soft hover:shadow-[0_12px_28px_-14px_rgba(185,190,199,0.85)]"
-          >
-            {headerCta.label}
-          </a>
-        </div>
-      </Reveal>
 
       {/* Что на выходе — поднято выше направлений и укрупнено (запрос
           владельца 08.08.2026). Человек платит не за «12 направлений»,
