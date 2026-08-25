@@ -36,3 +36,4 @@ _sync-latest/
 
 # Vercel
 .vercel
+.env*
