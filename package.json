@@ -12,12 +12,9 @@
     "lint:hooks": "eslint src"
   },
   "dependencies": {
-    "@gsap/react": "^2.1.2",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "gsap": "^3.15.0",
-    "motion": "^12.43.0",
     "ogl": "^1.0.11",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

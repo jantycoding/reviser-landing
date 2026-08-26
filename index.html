@@ -9,7 +9,7 @@
     <title>Reviser — внедрение ИИ-агентов в бизнес</title>
     <meta
       name="description"
-      content="Внедряем ИИ-агентов в бизнес: приём заявок за секунды в WhatsApp и Instagram, догрев клиентов, ответы на отзывы, контроль звонков и CRM. Начинается с аудита бизнеса за 14 990 ₸ — находим, где агент принесёт деньги именно вам."
+      content="Внедряем ИИ-агентов в бизнес: приём заявок за секунды в WhatsApp и Instagram, догрев клиентов, ответы на отзывы, контроль звонков и CRM. Начинается с аудита бизнеса — находим, где агент принесёт деньги именно вам."
     />
 
     <meta property="og:type" content="website" />
@@ -18,9 +18,25 @@
     <meta property="og:title" content="Reviser — ИИ-агент, который не спит и не увольняется" />
     <meta
       property="og:description"
-      content="Внедряем ИИ-агентов туда, где они принесут деньги. Первый шаг — аудит бизнеса по 12 направлениям за 14 990 ₸."
+      content="Внедряем ИИ-агентов туда, где они принесут деньги. Первый шаг — аудит бизнеса по 12 направлениям."
     />
-    <meta property="og:image" content="/og.png" />
+    <!--
+      АБСОЛЮТНЫЙ АДРЕС КАРТИНКИ, 26.08.2026.
+      WhatsApp, Telegram и Facebook не разворачивают относительный «/og.png»:
+      их сборщик превью читает значение как есть, не видит домена и молча
+      показывает голую ссылку. Поэтому %OG_BASE% подставляется на сборке
+      плагином из vite.config.js — см. комментарий там.
+      width/height позволяют мессенджеру зарезервировать место под картинку
+      до того, как она скачается: превью появляется в один шаг, без прыжка.
+    -->
+    <meta property="og:image" content="%OG_BASE%/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta
+      property="og:image:alt"
+      content="Reviser — ИИ-агент, который не спит и не увольняется"
+    />
     <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
