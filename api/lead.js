@@ -106,21 +106,26 @@ function getSql() {
 
 async function saveLead({ name, phone, source, page }) {
   const p = getSql();
-  if (!p) return false;
+  if (!p) return null;
   try {
     const sql = await p;
-    if (!sql) return false;
+    if (!sql) return null;
     /* Шаблонная строка драйвера подставляет значения ПАРАМЕТРАМИ, а не
        склейкой текста. Если писать запрос конкатенацией, имя вида
-       `'); drop table leads; --` сделает ровно то, что в нём написано. */
-    await sql`insert into leads (name, phone, source, page)
-              values (${name}, ${phone}, ${source}, ${page})`;
-    return true;
+       `'); drop table leads; --` сделает ровно то, что в нём написано.
+
+       `returning id` — не для красоты: этот id уезжает в callback_data кнопок
+       под сообщением в телеграме, и по нему api/tg.js находит нужную строку,
+       когда кто-то нажмёт «Беру». Без него кнопки не к чему привязать. */
+    const rows = await sql`insert into leads (name, phone, source, page)
+                           values (${name}, ${phone}, ${source}, ${page})
+                           returning id`;
+    return rows?.[0]?.id ?? null;
   } catch (err) {
     /* База НЕ ДОЛЖНА ронять заявку. Если Neon недоступен, человек всё равно
        уходит в WhatsApp, а уведомление всё равно летит в телеграм. */
     console.error('lead: не записалось в базу', err);
-    return false;
+    return null;
   }
 }
 
@@ -158,7 +163,8 @@ export default async function handler(req, res) {
   if (!name && !phone) return res.status(400).json({ ok: false });
 
   /* ─── ЗАПИСЬ В БАЗУ ─── до всего, что связано с Telegram. */
-  const stored = await saveLead({ name, phone, source, page });
+  const leadId = await saveLead({ name, phone, source, page });
+  const stored = leadId !== null;
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -183,6 +189,24 @@ export default async function handler(req, res) {
   if (!stored && process.env.DATABASE_URL) lines.push('', '⚠️ В базу не записалось');
   lines.push('', 'Если он не написал в WhatsApp сам — напишите первыми.');
 
+  /* Кнопки под заявкой. Появляются ТОЛЬКО если строка в базе есть: без id
+     нажатие некуда записать, а кнопка, которая ничего не делает, хуже её
+     отсутствия. Обработчик нажатий — api/tg.js.
+     callback_data ограничен 64 байтами, поэтому там короткий код действия
+     и число, а не JSON. */
+  const keyboard =
+    leadId === null
+      ? undefined
+      : {
+          inline_keyboard: [
+            [
+              { text: '🟡 Беру', callback_data: `take:${leadId}` },
+              { text: '🟢 Дозвонился', callback_data: `done:${leadId}` },
+              { text: '🔴 Не отвечает', callback_data: `lost:${leadId}` },
+            ],
+          ],
+        };
+
   try {
     const tg = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
@@ -192,6 +216,7 @@ export default async function handler(req, res) {
         text: lines.join('\n'),
         parse_mode: 'HTML',
         disable_web_page_preview: true,
+        ...(keyboard ? { reply_markup: keyboard } : {}),
       }),
     });
     if (!tg.ok) {
