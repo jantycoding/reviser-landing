@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLeadModal } from '../lib/leadModal';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
 import PriceUsd from '../components/ui/PriceUsd';
@@ -267,6 +268,7 @@ function Steps({ active }) {
 }
 
 export default function Checkout() {
+  const { open: openLead } = useLeadModal();
   const [values, setValues] = useState({ name: '', phone: '', company: '' });
   const [status, setStatus] = useState('idle'); // idle | sending | pay | paid | error
   const [order, setOrder] = useState(null); // { code, payUrl, qr }
@@ -511,113 +513,27 @@ export default function Checkout() {
                 </div>
               </div>
             ) : (
-              <form
-                onSubmit={handleSubmit}
-                /**
-                 * Enter в поле — вручную. В запасном режиме у формы нет кнопки
-                 * type="submit" (кнопка — настоящая <a href>, иначе iOS и
-                 * встроенный браузер Instagram режут переход), а браузер при
-                 * ДВУХ текстовых полях и без submit-кнопки неявную отправку не
-                 * делает вовсе. Проверено: Enter не давал ни перехода, ни
-                 * сообщения — последний шаг воронки был тупиком для всех, кто
-                 * заканчивает ввод клавишей, а не тапом.
-                 */
-                onKeyDown={e => {
-                  if (e.key !== 'Enter' || payEndpoint) return;
-                  e.preventDefault();
-                  if (!phoneReady()) return;
-                  handOff();
-                  window.location.href = waLink(values);
-                }}
-                className="grid gap-4"
-              >
-                {/* Имя не required: в запасном режиме кнопка — ссылка, и пустое
-                    поле не должно быть поводом задержать человека на форме. */}
-                <Field
-                  id="name"
-                  label={checkout.fields.name}
-                  value={values.name}
-                  onChange={handleChange}
-                  autoComplete="name"
-                  required={false}
-                />
-                <PhoneField
-                  id="phone"
-                  label={checkout.fields.phone}
-                  value={values.phone}
-                  onChange={handleChange}
-                  required={Boolean(payEndpoint)}
-                  error={phoneError}
-                  inputRef={phoneRef}
-                />
+              /* ФОРМА ОТСЮДА УБРАНА 26.08.2026 (решение владельца).
+                 Было: два поля и кнопка прямо в секции. Стало: цена, состав
+                 и кнопка, которая открывает то же всплывающее окно, что и
+                 все остальные кнопки страницы.
 
-                {/* Ловушка для спам-ботов. Поле есть в разметке, но скрыто от
-                    человека и убрано из порядка табуляции и из дерева
-                    доступности: живой посетитель его не увидит и не заполнит,
-                    автозаполнялка бота — заполнит. Бэкенд молча отбрасывает
-                    заявку с непустым company. Дешевле любой капчи и не требует
-                    от клиента ни одного лишнего действия. */}
-                <input
-                  type="text"
-                  name="company"
-                  value={values.company}
-                  onChange={handleChange}
-                  tabIndex={-1}
-                  autoComplete="off"
-                  aria-hidden="true"
-                  className="pointer-events-none absolute h-0 w-0 opacity-0"
-                />
-
+                 Причина не в экономии места. Форм на сайте стало две — здесь
+                 и в окне, — и обе принимали деньги. Две формы неизбежно
+                 расходятся: правку валидации вносят в одну, вторая остаётся
+                 старой, и ломается та, о которой забыли. Проверка «номер
+                 введён полностью» и «имя не пустое» теперь живёт ровно в
+                 одном месте. */
+              <div className="rounded-2xl border border-line bg-ink p-6 md:p-7">
                 <Summary />
 
-                {payEndpoint ? (
-                  <button type="submit" disabled={status === 'sending'} className={ctaClass}>
-                    <span className="relative z-10">{status === 'sending' ? checkout.submitting : checkout.submit}</span>
-                    <span className={shineClass} />
-                  </button>
-                ) : (
-                  <a
-                    href={waLink(values)}
-                    onClick={e => {
-                      if (!phoneReady()) {
-                        e.preventDefault();
-                        return;
-                      }
-                      handOff();
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={ctaClass}
-                  >
-                    <span className="relative z-10">{checkout.fallbackCta}</span>
-                    <span className={shineClass} />
-                  </a>
-                )}
+                <button type="button" onClick={() => openLead('секция оплаты')} className={`${ctaClass} mt-6 w-full`}>
+                  <span className="relative z-10">{checkout.fallbackCta}</span>
+                  <span className={shineClass} />
+                </button>
 
-                {/* Строка про Kaspi стоит вплотную к кнопке — там, где человек
-                    решается платить, а не под разделительной линией в подвале
-                    блока. В запасном режиме её нет вовсе: «оплата на стороне
-                    Kaspi» рядом с «написать агенту в WhatsApp» читается как
-                    обман, а не как гарантия. */}
-                {payEndpoint && <p className="text-fine text-fog">{checkout.kaspiNote}</p>}
-
-                {/* В запасном режиме сабмита нет — значит нет и статуса ошибки:
-                    пустой резерв под сообщение только отодвигал пояснение от
-                    кнопки на лишние 40px. */}
-                <div aria-live="polite" className={payEndpoint ? 'min-h-5' : 'sr-only'}>
-                  {status === 'error' && (
-                    <p className="text-fine text-signal">
-                      Не удалось создать счёт.{' '}
-                      <a href={waLink(values)} target="_blank" rel="noopener noreferrer" className="underline">
-                        Напишите {assistantName} в WhatsApp
-                      </a>{' '}
-                      — выставим вручную.
-                    </p>
-                  )}
-                </div>
-
-                <p className="text-fine text-mist">{payEndpoint ? checkout.privacy : checkout.fallbackNote}</p>
-              </form>
+                <p className="mt-4 text-fine text-mist">{checkout.fallbackNote}</p>
+              </div>
             )}
           </Reveal>
         </div>

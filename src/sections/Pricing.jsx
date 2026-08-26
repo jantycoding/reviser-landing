@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
 import PriceUsd from '../components/ui/PriceUsd';
+import { useLeadModal } from '../lib/leadModal';
 import { pricing } from '../content/site';
 
 /**
@@ -36,6 +37,9 @@ function Check() {
  * телефон — основной экран этой страницы.
  */
 function PlanCard({ plan, active, onActivate }) {
+  /* Каждый тариф передаёт своё название источником: без этого через месяц
+     не ответить, какой из трёх реально покупают, а какой стоит для вида. */
+  const { open: openLead } = useLeadModal();
   return (
     <div
       onMouseEnter={onActivate}
@@ -79,6 +83,10 @@ function PlanCard({ plan, active, onActivate }) {
 
       <a
         href="#checkout"
+        onClick={event => {
+          event.preventDefault();
+          openLead(`тариф: ${plan.name}`);
+        }}
         className="press mt-7 block rounded-xl bg-signal px-6 py-3.5 text-center text-body font-semibold text-ink transition-colors hover:bg-signal-soft"
       >
         {plan.cta}
@@ -88,6 +96,7 @@ function PlanCard({ plan, active, onActivate }) {
 }
 
 export default function Pricing() {
+  const { open: openLead } = useLeadModal();
   /* Стартовое состояние — рекомендованный тариф. Так на телефоне, где ховера
      нет, человек сразу видит, какой из трёх мы считаем основным. */
   const [active, setActive] = useState(() => {
@@ -145,6 +154,10 @@ export default function Pricing() {
             </div>
             <a
               href="#checkout"
+              onClick={event => {
+                event.preventDefault();
+                openLead('внедрение под ключ');
+              }}
               className="press shrink-0 rounded-xl border border-line-2 px-5 py-3.5 text-center text-body font-semibold whitespace-nowrap text-chalk transition-colors hover:bg-surface-2"
             >
               {pricing.next.cta}

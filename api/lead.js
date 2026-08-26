@@ -41,6 +41,8 @@
  * ──────────────────────────────────────────────────────────────────────────
  */
 
+import { ensureWebhook } from './tg.js';
+
 const MAX_FIELD = 200;
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 5;
@@ -165,6 +167,17 @@ export default async function handler(req, res) {
   /* ─── ЗАПИСЬ В БАЗУ ─── до всего, что связано с Telegram. */
   const leadId = await saveLead({ name, phone, source, page });
   const stored = leadId !== null;
+
+  /* Заодно проверяем, что вебхук бота зарегистрирован на нас и с правильным
+     секретом — иначе кнопки статусов под этим самым сообщением не сработают.
+     Без await: чинить телеграм — не работа приёма заявки, и человек на сайте
+     ждать этого не должен. Подробности и причина — в api/tg.js. */
+  const origin = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : req.headers.host
+      ? `https://${req.headers.host}`
+      : '';
+  ensureWebhook(origin).catch(() => {});
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;

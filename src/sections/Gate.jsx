@@ -1,6 +1,7 @@
 import CardSwap, { Card } from '../components/reactbits/CardSwap';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
+import { useLeadModal } from '../lib/leadModal';
 import useScreenSize from '../lib/useScreenSize';
 import { gate } from '../content/site';
 
@@ -14,6 +15,7 @@ import { gate } from '../content/site';
  * сразу после доводов идут обе цифры и переход на #checkout.
  */
 export default function Gate() {
+  const { open: openLead } = useLeadModal();
   /* Размеры стопки под экран. Не масштаб, а другие числа — почему именно
      так, подробно в lib/useScreenSize.js. */
   const stack = useScreenSize({
@@ -68,6 +70,10 @@ export default function Gate() {
               <div className="mt-9 flex flex-col items-start gap-3">
                 <a
                   href={gate.ctaHref}
+                  onClick={event => {
+                    event.preventDefault();
+                    openLead('ворота');
+                  }}
                   className="press group relative block w-full max-w-[26rem] overflow-hidden rounded-2xl bg-signal px-6 py-5 text-center text-lead font-semibold text-ink transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-20px_rgba(185,190,199,0.95)]"
                 >
                   <span className="relative z-10">{gate.cta}</span>

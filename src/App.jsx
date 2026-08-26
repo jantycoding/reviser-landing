@@ -1,4 +1,7 @@
 import Header from './components/Header';
+import LeadModal from './components/LeadModal';
+import CtaBand from './components/ui/CtaBand';
+import { LeadModalProvider } from './lib/leadModal';
 import Hero from './sections/Hero';
 import Losses from './sections/Losses';
 import Agents from './sections/Agents';
@@ -14,7 +17,9 @@ import Footer from './sections/Footer';
 
 export default function App() {
   return (
-    <>
+    /* Провайдер оборачивает всё: кнопка заявки есть и в шапке, и в подвале,
+       и между секциями — окно должно быть одно на всю страницу. */
+    <LeadModalProvider>
       <Header />
       <main>
         {/*
@@ -33,6 +38,13 @@ export default function App() {
           10 Faq       — возражения
           11 Checkout  — оплата
 
+          Между секциями стоят три полосы CtaBand — после «Ворот», после
+          «Аудита» и после «Вопросов». Каждая передаёт свой ярлык источника,
+          он виден в телеграме строкой «Откуда»: через месяц по нему будет
+          понятно, какая полоса приносит заявки, а какая просто занимает
+          экран. Их намеренно три, а не после каждой секции — почему,
+          написано в components/ui/CtaBand.jsx.
+
           Platforms поднят из хвоста страницы 26.08.2026 (решение владельца).
           Причина видна из порядка чтения: человек только что увидел три цены
           и первым делом думает «а с моей-то CRM это заработает». Ответ должен
@@ -43,15 +55,24 @@ export default function App() {
         <Losses />
         <Agents />
         <Gate />
+        {/* Полоса после «Ворот»: человек только что согласился, что ставить
+            агента наугад нельзя. Это первый момент страницы, когда предложение
+            купить аудит перестаёт быть преждевременным. */}
+        <CtaBand source="полоса после ворот" />
         <Audit />
         <Compare />
+        {/* После состава аудита — второй момент: понятно, что внутри. */}
+        <CtaBand source="полоса после аудита" />
         <Pricing />
         <Platforms />
         <Process />
         <Faq />
+        {/* После возражений — последний, самый сильный: вопросы сняты. */}
+        <CtaBand source="полоса после вопросов" />
         <Checkout />
       </main>
       <Footer />
-    </>
+      <LeadModal />
+    </LeadModalProvider>
   );
 }

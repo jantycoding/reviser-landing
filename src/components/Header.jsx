@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Logo from './ui/Logo';
+import { useLeadModal } from '../lib/leadModal';
 import { navItems, brand, headerCta, auditPrice, pricing } from '../content/site';
 
 /**
@@ -11,6 +12,13 @@ import { navItems, brand, headerCta, auditPrice, pricing } from '../content/site
  */
 
 export default function Header() {
+  /* Все три кнопки шапки открывают окно заявки, а не прокручивают к секции
+     оплаты. Причина: человек жмёт их на первом экране, где ещё ничего не
+     прочитал, и прыжок на восемь экранов вниз читается как «сайт дёрнулся».
+     Ярлык источника у каждой свой — по нему в телеграме видно, откуда
+     пришла заявка. href оставлен настоящим: если JS не выполнился,
+     браузер отработает якорь и человек всё равно доедет до формы. */
+  const { open: openLead } = useLeadModal();
   /* Клик по знаку — всегда возврат на первый экран. href="#top" сам по себе
      не работает, если человек уже стоит на #top: браузер считает переход
      несостоявшимся и ничего не делает. Поэтому скроллим руками и заодно
@@ -202,6 +210,10 @@ export default function Header() {
               цена, теперь просто «Получить аудит». */}
           <a
             href={headerCta.href}
+            onClick={event => {
+              event.preventDefault();
+              openLead('шапка');
+            }}
             aria-label={headerCta.label}
             className={`bg-signal-flat ml-auto min-h-11 shrink-0 items-center rounded-lg bg-signal px-3 text-[14px] font-normal whitespace-nowrap text-ink transition-colors hover:bg-signal-soft md:ml-2 md:inline-flex md:px-4 ${
               pillHiddenOnMobile ? 'hidden' : 'inline-flex'
@@ -266,7 +278,11 @@ export default function Header() {
             ))}
             <a
               href={headerCta.href}
-              onClick={() => setOpen(false)}
+              onClick={event => {
+                event.preventDefault();
+                setOpen(false);
+                openLead('меню на телефоне');
+              }}
               className="bg-signal-flat mt-1 block rounded-xl bg-signal px-4 py-3 text-center text-body font-normal text-ink"
             >
               {headerCta.label}
@@ -291,6 +307,10 @@ export default function Header() {
           </div>
           <a
             href={headerCta.href}
+            onClick={event => {
+              event.preventDefault();
+              openLead('нижняя панель');
+            }}
             tabIndex={barVisible ? undefined : -1}
             className="ml-auto shrink-0 rounded-xl bg-signal px-5 py-3 text-body font-semibold whitespace-nowrap text-ink transition-colors hover:bg-signal-soft"
           >

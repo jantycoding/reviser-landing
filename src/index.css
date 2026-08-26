@@ -621,3 +621,30 @@ a {
 .bg-signal-flat {
   background-image: none;
 }
+
+/* ------------------------------------------------------------------ *
+ * Появление окна заявки — 26.08.2026.
+ * Короткое и без отскока: это не украшение, а служебное движение, которое
+ * показывает, откуда взялось окно. При системной настройке «меньше
+ * движения» окно просто появляется.
+ * ------------------------------------------------------------------ */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-in {
+  animation: modal-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-in {
+    animation: none;
+  }
+}
