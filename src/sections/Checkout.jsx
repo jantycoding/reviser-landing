@@ -48,6 +48,160 @@ function Field({ id, label, value, onChange, type = 'text', autoComplete, inputM
   );
 }
 
+/* ------------------------------------------------------------------ *
+ * Поле телефона — маска, постоянный префикс, проверка перед отправкой.
+ *
+ * Зачем маска. Номер отсюда уходит в три места: в текст сообщения WhatsApp,
+ * в уведомление Telegram и в базу. Без маски туда прилетает «87071234567»,
+ * «+7 707 123 45 67», «7071234567» и «8 (707) 123-45-67» — четыре записи
+ * одного номера, по которым нельзя ни найти повтор, ни отсортировать.
+ *
+ * Почему «+7» вынесен из поля отдельной надписью (правка 26.08.2026).
+ * Раньше он жил внутри плейсхолдера и был такой же бледный, как остальная
+ * подсказка, — значит читался как «то, что надо ввести», а не «то, что уже
+ * стоит». Теперь это статичная надпись обычной яркости слева от поля, а
+ * бледной осталась только форма номера. Само значение поля префикса не
+ * содержит: в состояние уезжает «+7 (707) 123-45-67», в input показывается
+ * «(707) 123-45-67». Побочная польза — счётчик курсора больше не спотыкается
+ * о семёрку префикса, из-за которой первая версия дублировала цифры.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Национальная часть номера — до десяти цифр после «+7».
+ *
+ * Ловушка: «7071234567» одинаково законно читается как «страна 7 +
+ * 071234567» и как «оператор 707 + 1234567», а 707 — реальный казахстанский
+ * код. Ведущие 7 или 8 отрезаем только когда цифр 11 и больше, то есть номер
+ * точно вставлен целиком с кодом страны. Всё, что набирают руками, считается
+ * национальной частью: «+7» человек и так видит слева от поля.
+ */
+function phoneDigits(raw) {
+  const str = String(raw ?? '');
+  const trimmed = str.trimStart();
+  if (trimmed.startsWith('+7')) {
+    return trimmed.slice(2).replace(/\D/g, '').slice(0, 10);
+  }
+  let d = str.replace(/\D/g, '');
+  if (d.length >= 11 && (d[0] === '7' || d[0] === '8')) d = d.slice(1);
+  return d.slice(0, 10);
+}
+
+/** «(707) 123-45-67» — без кода страны, он нарисован отдельно. */
+function formatNational(d) {
+  if (!d) return '';
+  let out = `(${d.slice(0, 3)}`;
+  if (d.length >= 3) out += ')';
+  if (d.length > 3) out += ` ${d.slice(3, 6)}`;
+  if (d.length > 6) out += `-${d.slice(6, 8)}`;
+  if (d.length > 8) out += `-${d.slice(8, 10)}`;
+  return out;
+}
+
+/** Полное значение для состояния, WhatsApp, телеграма и базы. */
+const fullPhone = d => (d ? `+7 ${formatNational(d)}` : '');
+
+function PhoneField({ id, label, value, onChange, required, error, inputRef }) {
+  const own = useRef(null);
+  const ref = inputRef ?? own;
+  const caretAt = useRef(null);
+
+  /* Курсор считаем в цифрах слева от него, а не в символах: скобки и дефисы
+     вставляет маска, и между двумя перерисовками их количество меняется.
+     Без этого курсор прыгает в конец при любой правке в середине номера. */
+  useEffect(() => {
+    const el = ref.current;
+    const want = caretAt.current;
+    if (!el || want === null) return;
+    caretAt.current = null;
+    if (want === 0) {
+      el.setSelectionRange(0, 0);
+      return;
+    }
+    let seen = 0;
+    let pos = el.value.length;
+    for (let i = 0; i < el.value.length; i += 1) {
+      if (!/\d/.test(el.value[i])) continue;
+      seen += 1;
+      if (seen === want) {
+        pos = i + 1;
+        break;
+      }
+    }
+    el.setSelectionRange(pos, pos);
+  });
+
+  const handle = event => {
+    const el = event.target;
+    const caret = el.selectionStart ?? el.value.length;
+    caretAt.current = el.value.slice(0, caret).replace(/\D/g, '').length;
+    onChange({ target: { name: id, value: fullPhone(phoneDigits(el.value)) } });
+  };
+
+  const digits = phoneDigits(value);
+  const hintId = `${id}-error`;
+
+  return (
+    <label htmlFor={id} className="block">
+      <span className="mb-2 block text-fine font-medium text-fog">{label}</span>
+
+      {/* Рамка переехала с input на обёртку: иначе «+7» оказался бы за
+          пределами поля и читался как подпись, а не как часть номера. */}
+      <div
+        /* focus-within НЕ применяется в состоянии ошибки. Иначе он перебивал
+           бы красную рамку ровно тогда, когда она нужна: после неудачной
+           отправки мы сами ставим фокус в это поле, и подсветка ошибки
+           гасла бы в тот же миг, что и появлялась. Проверено замером —
+           рамка оставалась цвета --color-signal. */
+        className={`flex items-center rounded-xl border bg-surface transition-colors ${
+          error
+            ? 'border-[#c22e23] ring-2 ring-[#c22e23]/20'
+            : 'border-line-2 focus-within:border-signal focus-within:ring-2 focus-within:ring-signal/20'
+        }`}
+      >
+        <span aria-hidden="true" className="pl-4 pr-1.5 text-body text-chalk tabular-nums">
+          +7
+        </span>
+        <input
+          ref={ref}
+          id={id}
+          name={id}
+          type="tel"
+          value={formatNational(digits)}
+          onChange={handle}
+          required={required}
+          autoComplete="tel"
+          inputMode="tel"
+          placeholder="(___) ___-__-__"
+          aria-invalid={error || undefined}
+          aria-describedby={error ? hintId : undefined}
+          /* placeholder:text-mist/60 — свой цвет, не браузерный: у Chrome и
+             Safari разная прозрачность по умолчанию, и на одном из них
+             подсказка почти пропадает. */
+          /* Обводка фокуса гасится ИНЛАЙНОМ, а не классом. В index.css есть
+             глобальное правило `:focus-visible { outline: 2px solid … }` вне
+             @layer — оно старше любой Tailwind-утилиты, и `outline-none`
+             его не перебивал: обводка рисовалась вокруг input внутри обёртки,
+             и поле выглядело вложенным в другое поле. Инлайновый стиль
+             выигрывает у таблицы стилей без !important.
+             Доступность не пострадала: кольцо фокуса переехало на обёртку,
+             где оно охватывает и «+7», и сам ввод. */
+          style={{ outline: 'none' }}
+          className="w-full rounded-r-xl bg-transparent py-3.5 pr-4 text-body tabular-nums text-chalk placeholder:text-mist/60"
+        />
+      </div>
+
+      {/* Сообщение появляется ТОЛЬКО после попытки отправки, не по ходу
+          набора: подсказывать «введите номер полностью» человеку, который
+          ещё печатает, — это ругать его за незаконченное действие. */}
+      {error && (
+        <span id={hintId} role="alert" className="mt-1.5 block text-label text-[#c22e23]">
+          Введите номер полностью — 10 цифр после +7
+        </span>
+      )}
+    </label>
+  );
+}
+
 /**
  * «Чек» — что человек покупает, прямо над кнопкой списания денег.
  * До этого между заголовком с ценой и кнопкой на 390px было около 700px
@@ -116,9 +270,36 @@ export default function Checkout() {
   const [values, setValues] = useState({ name: '', phone: '', company: '' });
   const [status, setStatus] = useState('idle'); // idle | sending | pay | paid | error
   const [order, setOrder] = useState(null); // { code, payUrl, qr }
+  /* Ошибка телефона держится ОТДЕЛЬНО от статуса формы: она появляется только
+     по попытке отправки и гаснет, как только номер дозаполнили. */
+  const [phoneError, setPhoneError] = useState(false);
+  const phoneRef = useRef(null);
   const pollRef = useRef(null);
 
-  const handleChange = e => setValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = e => {
+    const { name, value } = e.target;
+    /* Гасим красноту сразу, как только номер стал полным — не дожидаясь
+       следующей попытки отправки. Человек уже исправил, ругаться не за что. */
+    if (name === 'phone' && phoneDigits(value).length === 10) setPhoneError(false);
+    setValues(prev => ({ ...prev, [name]: value }));
+  };
+
+  /**
+   * Единственная проверка перед уходом в WhatsApp.
+   *
+   * Она нужна именно здесь, а не в атрибутах поля: в запасном режиме кнопка —
+   * настоящая <a href> (иначе iOS и встроенный браузер Instagram режут
+   * переход), а по ссылке браузер валидацию формы не запускает вообще.
+   * Поэтому required и pattern на поле молчали, и уйти можно было с любым
+   * огрызком номера. Вызывается из всех трёх выходов: клик по кнопке,
+   * Enter в поле и submit в боевом режиме.
+   */
+  const phoneReady = () => {
+    if (phoneDigits(values.phone).length === 10) return true;
+    setPhoneError(true);
+    phoneRef.current?.focus();
+    return false;
+  };
 
   /**
    * Единственная точка, через которую человек уходит в WhatsApp из этого блока.
@@ -176,6 +357,8 @@ export default function Checkout() {
      * дошёл до конца страницы. Кнопка — настоящая <a href>, поэтому сабмит
      * ведёт туда же, куда клик.
      */
+    if (!phoneReady()) return;
+
     if (!payEndpoint) {
       handOff();
       window.location.href = waLink(values);
@@ -248,22 +431,20 @@ export default function Checkout() {
               <Steps active={activeStep} />
             </div>
 
-            {/* Три плашки снятия риска. Замер: левая колонка была занята
-                контентом на 210px из 565px — в самой дорогой точке страницы
-                стояла дыра в полэкрана, а всё, что удерживает (NDA через ЭЦП,
-                гостевой доступ только на чтение, реквизиты, возврат), лежало в
-                свёрнутом FAQ и в подвале. С пальцем на кнопке туда не ходят.
-                Ни одного нового обещания — только перенос уже сказанного туда,
-                где возникает сомнение. */}
+            {/* Снятие риска. Здесь оно потому, что это последняя точка, где
+                человек ищет причину не платить — в свёрнутом FAQ и в подвале
+                с пальцем на кнопке никто не читает.
+
+                Правка 26.08.2026: рамки и заливка сняты. На этом экране было
+                ЧЕТЫРЕ обведённых блока сразу — три плашки слева и чек справа,
+                — и глаз не понимал, что из них главное. Теперь обведён ровно
+                один блок, тот, где кнопка. Строки остались, вес ушёл. */}
             {Array.isArray(checkout.assurances) && checkout.assurances.length > 0 && (
-              <ul className="mt-8 grid gap-3">
+              <ul className="mt-8 grid gap-2.5 border-t border-line pt-5">
                 {checkout.assurances.map(text => (
-                  <li
-                    key={text}
-                    className="flex gap-3 rounded-xl border border-line bg-surface/50 px-4 py-3.5 text-fine text-fog"
-                  >
-                    <svg viewBox="0 0 20 20" className="mt-[0.35em] h-3.5 w-3.5 shrink-0 text-verify" fill="none" aria-hidden="true">
-                      <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <li key={text} className="flex gap-2.5 text-fine text-mist">
+                    <svg viewBox="0 0 20 20" className="mt-[0.4em] h-3 w-3 shrink-0 text-verify" fill="none" aria-hidden="true">
+                      <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     {text}
                   </li>
@@ -344,6 +525,7 @@ export default function Checkout() {
                 onKeyDown={e => {
                   if (e.key !== 'Enter' || payEndpoint) return;
                   e.preventDefault();
+                  if (!phoneReady()) return;
                   handOff();
                   window.location.href = waLink(values);
                 }}
@@ -359,15 +541,14 @@ export default function Checkout() {
                   autoComplete="name"
                   required={false}
                 />
-                <Field
+                <PhoneField
                   id="phone"
                   label={checkout.fields.phone}
                   value={values.phone}
                   onChange={handleChange}
-                  type="tel"
-                  autoComplete="tel"
-                  inputMode="tel"
                   required={Boolean(payEndpoint)}
+                  error={phoneError}
+                  inputRef={phoneRef}
                 />
 
                 {/* Ловушка для спам-ботов. Поле есть в разметке, но скрыто от
@@ -397,7 +578,13 @@ export default function Checkout() {
                 ) : (
                   <a
                     href={waLink(values)}
-                    onClick={handOff}
+                    onClick={e => {
+                      if (!phoneReady()) {
+                        e.preventDefault();
+                        return;
+                      }
+                      handOff();
+                    }}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={ctaClass}
