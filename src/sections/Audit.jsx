@@ -1,4 +1,5 @@
 import DepthCarousel from '../components/reactbits/DepthCarousel';
+import useScreenSize from '../lib/useScreenSize';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
 import { audit, headerCta } from '../content/site';
@@ -107,6 +108,18 @@ function AreasMap({ areas }) {
 }
 
 export default function Audit() {
+  /* Размеры сцены под экран — та же причина, что у стопки в «Воротах»:
+     компонент из библиотеки на узком экране ужимает карточку вместе с
+     текстом внутри. Подробно — в lib/useScreenSize.js. */
+  /* arrows: на телефоне стрелки выключены — карточка занимает почти всю
+     ширину экрана, и кнопки ложились прямо на текст. Пальцем там листать
+     удобнее, а точки внизу показывают, сколько карточек осталось. */
+  const deck = useScreenSize({
+    phone: w => ({ width: Math.min(w - 64, 320), height: 300, spread: 26, depth: 130, arrows: false }),
+    tablet: { width: 480, height: 330, spread: 110, depth: 170, arrows: true },
+    desktop: { width: 640, height: 380, spread: 168, depth: 200, arrows: true },
+  });
+
   return (
     /* tight: «Ворота → Аудит» — один аргумент, а не два отдельных блока. */
     <Section id="audit">
@@ -146,12 +159,22 @@ export default function Audit() {
             Настройки правились 26.08.2026 по замечаниям владельца, от
             исходного примера библиотеки отличаются четырьмя числами:
 
-            — spread 185 → 120: карточки стояли слишком широко и читались
-              как три отдельных объекта, а не как одна стопка;
+            — spread 185 → 120 → 168. Промежуточное значение продержалось
+              недолго: после того как карточка выросла до 640 пикселей,
+              смещения в 120 стало не хватать — задняя карточка почти
+              накрывала переднюю, и её край резал текст пополам. Разброс
+              должен расти вместе с шириной карточки, иначе стопка
+              превращается в кашу;
             — tilt 22° → 30°: угол шире, видно ребро карточки, стопка
               выглядит уходящей вглубь, а не разложенной веером вбок;
-            — карточка 420×260 → 588×340: за два захода стала шире на 40%,
-              последние 25% — по прямой просьбе владельца;
+            — карточка 420×260 → 676×390: росла в три захода по просьбам
+              владельца, суммарно шире исходной на 60%;
+            — visibleCards 3 → 2 и falloff 0.12 → 0.04. Это правка про
+              «сзади появляется лишняя карточка, как будто чужая». Затемнение
+              на светлой странице читается не как глубина, а как грязь:
+              четвёртая карточка становилась серым пятном позади белых.
+              Теперь в глубину уходят две, и почти не темнея — расстояние
+              показывают размытие и смещение, а не серый цвет;
             — duration 400 → 950 мс и кривая power2.inOut вместо power3.out.
               Вот это была не косметика. При 400 мс с power3.out три четверти
               пути проходят за первые 150 мс — глаз видит скачок, а не
@@ -176,32 +199,49 @@ export default function Audit() {
             карточка карусели шире экрана по замыслу (420px), а компонент
             рассчитан на то, что её края обрежет контейнер. Проверено:
             без обрезки window.scrollTo(500,0) даёт scrollX = 31. */}
-        <div className="mt-3 h-[430px] w-full clip-x sm:h-[470px]">
+        <div className="mt-3 h-[430px] w-full clip-x sm:h-[520px]">
           <DepthCarousel
             items={audit.outputs.map(out => ({
               alt: out.title,
               content: (
-                <div className="flex h-full flex-col justify-center p-7 md:p-8">
-                  <div className="flex items-center gap-2.5">
-                    <Check />
-                    <div className="text-card font-medium text-chalk">{out.title}</div>
+                /* justify-start, а не justify-center — правка 26.08.2026.
+                   При центрировании по вертикали заголовок каждой карточки
+                   вставал на своей высоте: у «Карты потерь» описание в две
+                   строки, у «Что чинить руками» — в четыре, и на
+                   перелистывании текст прыгал вверх-вниз. Владелец назвал
+                   это «разными интервалами от контейнера». Теперь у всех
+                   четырёх карточек одинаковый отступ сверху и заголовки
+                   стоят на одной линии. */
+                <div className="flex h-full flex-col justify-start p-7 sm:p-9 md:p-10">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-[0.35em]">
+                      <Check />
+                    </span>
+                    {/* Кегль поднят: было text-card (17px) у заголовка и
+                        text-fine (15px) у описания — на карточке шириной
+                        640 пикселей это выглядело подписью к пустоте.
+                        Начертание bold: заголовок должен читаться первым,
+                        это перечень того, за что человек платит. */}
+                    <div className="text-h3 font-bold text-chalk">{out.title}</div>
                   </div>
-                  <p className="mt-3 text-fine text-fog">{out.text}</p>
+                  <p className="mt-4 max-w-[46ch] text-lead text-fog">{out.text}</p>
                 </div>
               ),
             }))}
-            depth={200}
-            spread={120}
+            depth={deck.depth}
+            spread={deck.spread}
             tilt={30}
             tiltDirection="right"
             perspective={1850}
-            visibleCards={3}
-            falloff={0.12}
-            blur={1}
+            autoScale={false}
+            showControls={deck.arrows}
+            visibleCards={2}
+            falloff={0.04}
+            blur={1.5}
             autoplay
             loop
-            cardWidth={588}
-            cardHeight={340}
+            cardWidth={deck.width}
+            cardHeight={deck.height}
             radius={13}
             tint="#ffffff"
             duration={950}

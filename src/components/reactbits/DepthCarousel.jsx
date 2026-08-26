@@ -61,6 +61,7 @@ const DepthCarousel = ({
   loop = true,
   showControls = true,
   showIndicators = true,
+  autoScale = true,
   onChange,
   className = '',
 }) => {
@@ -100,6 +101,10 @@ const DepthCarousel = ({
     autoplayDelay,
   };
 
+  /* Ширина, нужная сцене целиком: карточка плюс вылет стопки в обе стороны
+     плюс место под стрелки. */
+  const needed = cfg => cfg.cardWidth + Math.abs(cfg.spread) * 2 + 120;
+
   const layout = useCallback(pos => {
     const cfg = cfgRef.current;
     const n = cfg.count;
@@ -124,6 +129,15 @@ const DepthCarousel = ({
       const tx = dir * cfg.spread * d;
       const ry = dir * cfg.tilt * clamp(d, 0, 1);
       let opacity = d < 0 ? Math.max(0, 1 + d) : 1;
+      /* Дальняя карточка гаснет ПЛАВНО, а не пропадает на границе видимости.
+         Правка 26.08.2026: владелец заметил, что последняя карточка «как
+         будто съезжает назад» и выглядит чужой. Причина была в резком
+         переключении: до границы карточка рисовалась полностью, за границей
+         исчезала в один кадр, и на перелистывании это читалось как рывок.
+         Теперь последняя единица глубины — зона затухания. */
+      if (d > cfg.visibleCards - 1) {
+        opacity *= clamp(cfg.visibleCards - d, 0, 1);
+      }
       if (!shown) opacity = 0;
       const brightness = Math.max(0.15, 1 - back * cfg.falloff);
       const blurPx = cfg.blur > 0 ? Math.min(cfg.blur, (back / Math.max(1, cfg.visibleCards)) * cfg.blur) : 0;
@@ -200,13 +214,19 @@ const DepthCarousel = ({
     const ro = new ResizeObserver(entries => {
       const w = entries[0].contentRect.width;
       const cfg = cfgRef.current;
-      const needed = cfg.cardWidth + Math.abs(cfg.spread) * 2 + 120;
-      scaleRef.current = clamp(w / needed, 0.4, 1);
+      /* autoScale = false отключает автоматическое ужатие сцены.
+         Правка 26.08.2026. Ужатие здесь — это CSS-масштаб всей карточки
+         вместе с текстом внутри: на телефоне при заданных 340 пикселях
+         ширины сцена сжималась до 0.65, и заголовок в 19 пикселей
+         превращался в 12. Когда размеры карточки уже подобраны под экран
+         снаружи (см. lib/useScreenSize.js), масштабировать нечего —
+         достаточно обрезать вылет стопки контейнером. */
+      scaleRef.current = autoScale ? clamp(w / needed(cfg), 0.4, 1) : 1;
       layout(posRef.current);
     });
     ro.observe(root);
     return () => ro.disconnect();
-  }, [layout]);
+  }, [layout, autoScale]);
 
   useEffect(() => {
     const el = rootRef.current;

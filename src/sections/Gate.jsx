@@ -1,6 +1,7 @@
 import CardSwap, { Card } from '../components/reactbits/CardSwap';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
+import useScreenSize from '../lib/useScreenSize';
 import { gate } from '../content/site';
 
 /**
@@ -13,6 +14,14 @@ import { gate } from '../content/site';
  * сразу после доводов идут обе цифры и переход на #checkout.
  */
 export default function Gate() {
+  /* Размеры стопки под экран. Не масштаб, а другие числа — почему именно
+     так, подробно в lib/useScreenSize.js. */
+  const stack = useScreenSize({
+    phone: w => ({ width: Math.min(w - 92, 330), height: 250, dx: 26, dy: 28 }),
+    tablet: { width: 440, height: 290, dx: 42, dy: 46 },
+    desktop: { width: 550, height: 330, dx: 55, dy: 60 },
+  });
+
   return (
     <Section id="gate">
       {/* Подложка: поворотная секция должна читаться как один довод, а не как
@@ -79,7 +88,7 @@ export default function Gate() {
               наехал бы на карточки. */}
           <div
             aria-hidden="true"
-            className="relative h-[380px] w-full sm:h-[450px] lg:h-[480px]"
+            className="relative h-[300px] w-full sm:h-[420px] lg:h-[480px]"
           >
             {/* Правки 26.08.2026 по замечаниям владельца:
                 — карточки крупнее на 10% (400×264 → 440×290), контейнер под
@@ -96,16 +105,16 @@ export default function Gate() {
                   Теперь после каждой смены есть полторы секунды покоя, и
                   клик читается как клик. */}
             <CardSwap
-              width={550}
-              height={330}
-              cardDistance={55}
-              verticalDistance={60}
+              width={stack.width}
+              height={stack.height}
+              cardDistance={stack.dx}
+              verticalDistance={stack.dy}
               delay={4000}
               skewAmount={4}
               pauseOnHover
             >
               {gate.reasons.map(reason => (
-                <Card key={reason.n} className="flex flex-col justify-center p-7 md:p-8">
+                <Card key={reason.n} className="flex flex-col justify-center p-5 sm:p-7 md:p-8">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-2 font-mono text-fine font-semibold text-fog tabular-nums">
                     {reason.n}
                   </div>
