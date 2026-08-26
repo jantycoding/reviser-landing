@@ -1,5 +1,5 @@
 /**
- * Приём заявки с лендинга → уведомление в Telegram.
+ * Приём заявки с лендинга → запись в базу → уведомление в Telegram.
  *
  * Зачем эта функция вообще существует
  * -----------------------------------
@@ -11,8 +11,8 @@
  * причём именно у тех, кто дошёл до конца страницы, то есть у самых дорогих.
  *
  * Теперь браузер параллельно с переходом отправляет данные сюда, а отсюда они
- * уходят в Telegram. Даже если человек до WhatsApp не дошёл, номер у вас есть
- * и ему можно написать первым.
+ * уходят в базу и в Telegram. Даже если человек до WhatsApp не дошёл, номер
+ * у вас есть и ему можно написать первым.
  *
  * Почему это серверная функция, а не запрос в Telegram прямо из браузера
  * ---------------------------------------------------------------------
@@ -24,6 +24,21 @@
  * Переменные окружения (Vercel → Settings → Environment Variables):
  *   TELEGRAM_BOT_TOKEN — токен от @BotFather
  *   TELEGRAM_CHAT_ID   — id чата или группы, куда слать заявки
+ *   DATABASE_URL       — pooled-строка Neon (необязательна: без неё функция
+ *                        работает как раньше, просто не пишет в базу)
+ *
+ * ──────────────────────────────────────────────────────────────────────────
+ * ПОРЯДОК ДЕЙСТВИЙ ИЗМЕНЁН 26.08.2026, и это не косметика.
+ *
+ * Раньше проверка TELEGRAM_BOT_TOKEN стояла В САМОМ НАЧАЛЕ и делала ранний
+ * выход. Если бы запись в базу просто добавили ниже по коду, она бы никогда
+ * не выполнялась при незаданном токене — то есть ровно в той ситуации, ради
+ * которой база и заводится.
+ *
+ * Теперь так: сначала разбираем и проверяем заявку, потом ПИШЕМ В БАЗУ, и
+ * только затем занимаемся Telegram. База — хранилище, Telegram — уведомление.
+ * Уведомление имеет право не дойти, хранилище — нет.
+ * ──────────────────────────────────────────────────────────────────────────
  */
 
 const MAX_FIELD = 200;
@@ -59,19 +74,60 @@ const clean = v =>
    «<b>Арсен» либо сломает сообщение, либо пролезет тегом. */
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+/* ------------------------------------------------------------------ *
+ * База (Neon)
+ *
+ * Клиент создаётся ЛЕНИВО и внутри try, а не строкой на верхнем уровне
+ * модуля. Разница принципиальна: `neon(undefined)` бросает исключение сразу
+ * при загрузке модуля, и функция начинает отвечать 500 на КАЖДЫЙ запрос —
+ * то есть незаданная DATABASE_URL убила бы и телеграм-уведомления тоже.
+ *
+ * Импорт тоже динамический, по той же причине: если пакет
+ * @neondatabase/serverless ещё не установлен, статический import обрушит
+ * весь файл при сборке. Динамический — только эту одну попытку записи.
+ * Результат кэшируется, так что импорт реально происходит один раз на
+ * экземпляр функции, а не на запрос.
+ * ------------------------------------------------------------------ */
+let sqlPromise = null;
+
+function getSql() {
+  if (!process.env.DATABASE_URL) return null;
+  if (!sqlPromise) {
+    sqlPromise = import('@neondatabase/serverless')
+      .then(({ neon }) => neon(process.env.DATABASE_URL))
+      .catch(err => {
+        console.error('lead: не удалось поднять клиент Neon', err);
+        sqlPromise = null; // дадим следующему запросу попробовать снова
+        return null;
+      });
+  }
+  return sqlPromise;
+}
+
+async function saveLead({ name, phone, source, page }) {
+  const p = getSql();
+  if (!p) return false;
+  try {
+    const sql = await p;
+    if (!sql) return false;
+    /* Шаблонная строка драйвера подставляет значения ПАРАМЕТРАМИ, а не
+       склейкой текста. Если писать запрос конкатенацией, имя вида
+       `'); drop table leads; --` сделает ровно то, что в нём написано. */
+    await sql`insert into leads (name, phone, source, page)
+              values (${name}, ${phone}, ${source}, ${page})`;
+    return true;
+  } catch (err) {
+    /* База НЕ ДОЛЖНА ронять заявку. Если Neon недоступен, человек всё равно
+       уходит в WhatsApp, а уведомление всё равно летит в телеграм. */
+    console.error('lead: не записалось в базу', err);
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false });
-  }
-
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) {
-    // Переменные не заданы — молчим в статусе 200. Для человека на сайте
-    // ничего не изменилось: он всё равно уходит в WhatsApp по ссылке.
-    console.error('lead: TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не заданы');
-    return res.status(200).json({ ok: true, delivered: false });
   }
 
   const ip =
@@ -101,6 +157,19 @@ export default async function handler(req, res) {
 
   if (!name && !phone) return res.status(400).json({ ok: false });
 
+  /* ─── ЗАПИСЬ В БАЗУ ─── до всего, что связано с Telegram. */
+  const stored = await saveLead({ name, phone, source, page });
+
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) {
+    // Переменные не заданы — молчим в статусе 200. Для человека на сайте
+    // ничего не изменилось: он всё равно уходит в WhatsApp по ссылке.
+    // Заявка при этом уже лежит в базе, если DATABASE_URL задан.
+    console.error('lead: TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не заданы');
+    return res.status(200).json({ ok: true, delivered: false, stored });
+  }
+
   const lines = [
     '<b>Заявка с сайта Reviser</b>',
     '',
@@ -109,6 +178,9 @@ export default async function handler(req, res) {
     `Откуда: ${esc(source)}`,
   ];
   if (page) lines.push(`Страница: ${esc(page)}`);
+  /* Маркер «не сохранилось» виден прямо в чате. Иначе про отвалившуюся базу
+     вы узнаете через месяц, когда полезете считать заявки за август. */
+  if (!stored && process.env.DATABASE_URL) lines.push('', '⚠️ В базу не записалось');
   lines.push('', 'Если он не написал в WhatsApp сам — напишите первыми.');
 
   try {
@@ -124,12 +196,12 @@ export default async function handler(req, res) {
     });
     if (!tg.ok) {
       console.error('lead: telegram ответил', tg.status, await tg.text());
-      return res.status(200).json({ ok: true, delivered: false });
+      return res.status(200).json({ ok: true, delivered: false, stored });
     }
   } catch (err) {
     console.error('lead: не дозвонились до telegram', err);
-    return res.status(200).json({ ok: true, delivered: false });
+    return res.status(200).json({ ok: true, delivered: false, stored });
   }
 
-  return res.status(200).json({ ok: true, delivered: true });
+  return res.status(200).json({ ok: true, delivered: true, stored });
 }
