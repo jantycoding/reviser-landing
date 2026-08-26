@@ -68,8 +68,15 @@ function Cell({ value }) {
 }
 
 export default function Compare() {
+  /* clip-x, 26.08.2026. Замер на экране 390px: страница реально уезжала вбок
+     на 295px — window.scrollTo(400, 0) давал scrollX = 286, а не 0. Виновата
+     эта секция: обёртка таблицы прокручивается сама (overflow-x-auto работает
+     как задумано), но ширина её содержимого всё равно попадала в scrollWidth
+     документа, и весь лендинг ходил вправо при свайпе — на телефоне это
+     читается как сломанная вёрстка. Обрезка на уровне секции лечит ровно это
+     и не мешает таблице скроллиться внутри своей рамки. */
   return (
-    <Section id="compare">
+    <Section id="compare" className="clip-x">
       <Reveal className="max-w-3xl blur-in">
         <Eyebrow>{compare.eyebrow}</Eyebrow>
         <SectionTitle>{compare.title}</SectionTitle>

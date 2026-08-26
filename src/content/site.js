@@ -255,21 +255,28 @@ export const losses = {
 export const platforms = {
   title: 'Подключаемся к тому, что у вас уже есть',
   note: 'Агент работает внутри ваших систем. Переносить и переделывать ничего не нужно.',
+  /* Значок задаётся смыслом, а не брендом: `crm`, `payment`, `pin`.
+     Почему не логотипы — подробно в components/ui/PlatformIcon.jsx.
+     Правило для этого списка: сюда попадает только то, что мы умеем
+     подключить сегодня. Каждая строка здесь — обещание, данное человеку
+     до оплаты; строка, за которой нет умения, всплывёт на внедрении, когда
+     деньги уже взяты. */
   items: [
-    'amoCRM',
-    'Bitrix24',
-    'WhatsApp Business',
-    'Instagram Direct',
-    'Telegram',
-    'Meta Ads',
-    'Google Ads',
-    '2ГИС',
-    'Google Maps',
-    'Яндекс Карты',
-    'Google Sheets',
-    '1С',
-    'Kaspi',
-    'IP-телефония',
+    { label: 'WhatsApp Business', icon: 'whatsapp' },
+    { label: 'Instagram Direct', icon: 'instagram' },
+    { label: 'Telegram', icon: 'telegram' },
+    { label: 'IP-телефония', icon: 'phone' },
+    { label: 'amoCRM', icon: 'amocrm' },
+    { label: 'Bitrix24', icon: 'bitrix' },
+    { label: 'Altegio', icon: 'altegio' },
+    { label: 'Kaspi', icon: 'kaspi' },
+    { label: '1С', icon: 'odinc' },
+    { label: 'Google Sheets', icon: 'googleSheets' },
+    { label: 'Meta Ads', icon: 'meta' },
+    { label: 'Google Ads', icon: 'googleAds' },
+    { label: '2ГИС', icon: 'twogis' },
+    { label: 'Google Maps', icon: 'googleMaps' },
+    { label: 'Яндекс Карты', icon: 'yandex' },
   ],
 };
 

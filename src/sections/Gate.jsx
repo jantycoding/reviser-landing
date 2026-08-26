@@ -1,5 +1,6 @@
+import CardSwap, { Card } from '../components/reactbits/CardSwap';
 import Reveal from '../components/ui/Reveal';
-import { Section, Eyebrow, SectionTitle } from '../components/ui/Section';
+import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
 import { gate } from '../content/site';
 
 /**
@@ -14,61 +15,108 @@ import { gate } from '../content/site';
 export default function Gate() {
   return (
     <Section id="gate">
-      <Reveal className="max-w-3xl">
-        <Eyebrow>{gate.eyebrow}</Eyebrow>
-        <SectionTitle>{gate.title}</SectionTitle>
-      </Reveal>
-
       {/* Подложка: поворотная секция должна читаться как один довод, а не как
           три подписи в пустоте, иначе её проскакивают на скролле. */}
-      <div className="mt-stack rounded-2xl border border-line bg-surface/40 p-6 sm:p-8 md:p-10">
-        <div className="grid gap-x-8 gap-y-9 md:grid-cols-3">
-          {gate.reasons.map((reason, i) => (
-            <Reveal key={reason.n} delay={i * 0.07}>
-              {/* Тот же кружок с моно-цифрой, что в «Как проходит» и в шагах
-                  оплаты: четыре разных способа нумерации на одной странице —
-                  это то, по чему шаблон отличают от продукта.
-                  Прежний вариант — крупная цифра text-signal/35 — давал
-                  контраст 1.77:1 при требуемых 3:1: на телефоне при уличном
-                  свете цифры просто пропадали, а вблизи читались как
-                  недогруженная графика в блоке, который поворачивает воронку. */}
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface font-mono text-fine font-semibold text-fog tabular-nums"
-                aria-hidden="true"
-              >
-                {reason.n}
-              </div>
-              <h3 className="mt-5 text-h3 font-semibold text-chalk">{reason.title}</h3>
-              <p className="mt-2.5 text-body text-fog">{reason.text}</p>
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface/40 p-6 sm:p-8 md:p-10">
+        {/* Раскладка 26.08.2026 (запрос владельца: «здесь нет ничего
+            интересного»). Три довода переехали в стопку CardSwap справа,
+            слева осталась мысль секции и выход в оплату.
+
+            ЧТО ЭТО СТОИТ, ЧЕСТНО. Раньше все три довода читались одним
+            взглядом. Теперь спереди всегда один, остальные два видны краем и
+            выходят вперёд по очереди — каждые три секунды. Человек, который
+            торопится, прочитает один довод вместо трёх. Взамен секция
+            перестала быть плоской таблицей, а сами доводы короткие и
+            равнозначные: любой из трёх работает сам по себе.
+
+            Порядок в разметке — довод 01 первым, поэтому он же спереди
+            в первый момент. */}
+        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)]">
+          <div>
+            <Reveal>
+              <Eyebrow>{gate.eyebrow}</Eyebrow>
+              <SectionTitle>{gate.title}</SectionTitle>
+              <SectionLead>{gate.subtitle}</SectionLead>
             </Reveal>
-          ))}
+
+            {/* Текстовый дубль стопки — для скринридера и для случая, когда
+                JS не выполнился. Карточки справа помечены aria-hidden: они
+                показывают ровно этот же текст, и без дубля человек с
+                экранным диктором услышал бы содержимое трижды подряд в
+                перемешанном порядке. */}
+            <ul className="sr-only">
+              {gate.reasons.map(reason => (
+                <li key={reason.n}>
+                  {reason.title}. {reason.text}
+                </li>
+              ))}
+            </ul>
+
+            {/* Выход в оплату переехал под текст, в левую колонку: он вывод из
+                доводов, а не подпись под всей секцией. Раньше кнопка стояла
+                поперёк рамки, и стопка карточек ложилась прямо на неё. */}
+            <Reveal delay={0.12}>
+              <div className="mt-9 flex flex-col items-start gap-3">
+                <a
+                  href={gate.ctaHref}
+                  className="press group relative block w-full max-w-[26rem] overflow-hidden rounded-2xl bg-signal px-6 py-5 text-center text-lead font-semibold text-ink transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-20px_rgba(185,190,199,0.95)]"
+                >
+                  <span className="relative z-10">{gate.cta}</span>
+                  {/* Тот же блик, что на кнопке оплаты в #checkout. Он остался
+                      ровно на двух кнопках страницы — тех, что ведут к деньгам. */}
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+                  />
+                </a>
+                <span className="text-fine text-mist">{gate.ctaNote}</span>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* Высота задана контейнеру, потому что сама стопка позиционируется
+              абсолютно и из потока выпадает: без этого следующий блок
+              наехал бы на карточки. */}
+          <div
+            aria-hidden="true"
+            className="relative h-[380px] w-full sm:h-[450px] lg:h-[480px]"
+          >
+            {/* Правки 26.08.2026 по замечаниям владельца:
+                — карточки крупнее на 10% (400×264 → 440×290), контейнер под
+                  них подрос на 5%, иначе нижняя карточка упиралась в край;
+                — наклон 4° вместо 6°: при большем размере тот же угол
+                  читался как перекос вёрстки, а не как приём;
+                — карточки ещё на 25% шире (440 → 550): владелец сказал
+                  «слишком маленькая»;
+                — пауза между сменами 4 с, и это не «сделал длиннее».
+                  Сама анимация с упругой кривой идёт около 2,5 с. При паузе
+                  2,2 с следующая смена стартовала раньше, чем заканчивалась
+                  предыдущая: стопка не останавливалась никогда, и нажатие на
+                  неё не давало никакого отклика — двигалось и до нажатия.
+                  Теперь после каждой смены есть полторы секунды покоя, и
+                  клик читается как клик. */}
+            <CardSwap
+              width={550}
+              height={330}
+              cardDistance={55}
+              verticalDistance={60}
+              delay={4000}
+              skewAmount={4}
+              pauseOnHover
+            >
+              {gate.reasons.map(reason => (
+                <Card key={reason.n} className="flex flex-col justify-center p-7 md:p-8">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-2 font-mono text-fine font-semibold text-fog tabular-nums">
+                    {reason.n}
+                  </div>
+                  <h3 className="mt-5 text-h3 font-semibold text-chalk">{reason.title}</h3>
+                  <p className="mt-2.5 text-body text-fog">{reason.text}</p>
+                </Card>
+              ))}
+            </CardSwap>
+          </div>
         </div>
 
-        {/* Выход в оплату — вывод из трёх доводов.
-            Решение владельца 07.08.2026: вместо полосы «абзац с ценами слева +
-            мелкая кнопка справа» здесь одна крупная кнопка. Раньше текст
-            занимал две трети строки, и кнопка — единственное действие
-            секции — читалась как сноска к абзацу.
-            Ширина ограничена 34rem и блок центрирован: кнопка во всю ширину
-            рамки на 1152px превращается в полосу, по которой непонятно, куда
-            целиться, и перестаёт читаться как кнопка. */}
-        <Reveal delay={0.12}>
-          <div className="mt-8 flex flex-col items-center gap-3 border-t border-line pt-8 md:mt-10 md:pt-10">
-            <a
-              href={gate.ctaHref}
-              className="press group relative block w-full max-w-[34rem] overflow-hidden rounded-2xl bg-signal px-6 py-5 text-center text-lead font-semibold text-ink transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-20px_rgba(185,190,199,0.95)]"
-            >
-              <span className="relative z-10">{gate.cta}</span>
-              {/* Тот же блик, что на кнопке оплаты в #checkout. Он остался ровно
-                  на двух кнопках страницы — тех, что ведут к деньгам. */}
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-              />
-            </a>
-            <span className="text-fine text-mist">{gate.ctaNote}</span>
-          </div>
-        </Reveal>
       </div>
     </Section>
   );

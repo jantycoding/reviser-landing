@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react';
+import MaskedHeading from '../components/reactbits/MaskedHeading';
 import Reveal from '../components/ui/Reveal';
 import SafeBackground from '../components/ui/SafeBackground';
 import { hero } from '../content/site';
@@ -109,9 +110,39 @@ export default function Hero() {
                через Reveal, без GSAP на первом экране. */}
         <Reveal className="w-full blur-in">
           <h1 className="w-full text-balance text-chalk">
-            <span className="font-script block text-[clamp(1.875rem,1.4rem+2.1vw,3rem)] leading-[1.12] font-medium text-fog">
-              {hero.title}
-            </span>
+            {/* Первая строка — MaskedHeading (react-bits), 26.08.2026 по запросу
+                владельца. Сквозь буквы видно тканевую текстуру, она едет за
+                курсором и слегка дрейфует сама.
+
+                ПОЧЕМУ ТЕКСТУРА ТЁМНАЯ, А НЕ ФОН СТРАНИЦЫ. Фон первого экрана —
+                белый шёлк; залить им буквы значило бы стереть строку начисто,
+                белым по белому. Внутри букв — та же тёмная ткань, что на
+                превью для мессенджеров (public/og.png): страница и ссылка на
+                неё начинают выглядеть одним материалом.
+
+                ПОЧЕМУ inheritFont. Компонент из библиотеки сам назначает кегль
+                долей от ширины экрана. Здесь размер и начертание остаются теми
+                же, что были: font-script, тот же clamp(), тот же вес — правка
+                добавляет движение и ничего не меняет в типографике.
+
+                trigger="mount", а не "view": строка и так на первом экране,
+                ждать её появления в кадре нечего. */}
+            <MaskedHeading
+              tag="span"
+              text={hero.title}
+              src="/heading-fill.jpg"
+              inheritFont
+              reveal="rise"
+              trigger="mount"
+              duration={1.05}
+              stagger={0.08}
+              parallax={22}
+              drift={12}
+              fillScale={1.35}
+              brightness={0.78}
+              align="center"
+              className="font-script block text-[clamp(1.875rem,1.4rem+2.1vw,3rem)] leading-[1.12] font-medium text-fog"
+            />
             <span className="mt-[0.06em] block font-hero text-[clamp(2.125rem,1.5rem+2.8vw,3.5rem)] leading-[1.05] font-extrabold tracking-[-0.02em]">
               {hero.titleAccent}
             </span>

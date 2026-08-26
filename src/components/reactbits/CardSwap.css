@@ -1,0 +1,62 @@
+/* CardSwap (react-bits, вариант JS + CSS).
+   Отличие от файла из библиотеки — только палитра карточки: там жёстко
+   `background: #000; border: 1px solid #fff`, а у нас страница светлая, и
+   чёрные карточки с белой обводкой выглядели бы вырезкой из чужого макета.
+   Цвета взяты токенами дизайн-системы, поэтому карточка автоматически
+   переворачивается внутри .scope-dark. Геометрия, перспектива и брейкпоинты
+   оставлены как в оригинале. */
+
+/* Стопка центрирована в своём контейнере, а не прижата к правому нижнему
+   углу, как в оригинале. Там она рассчитана на «вылет» за край секции —
+   у нас секция обведена рамкой, и вылезающая карточка просто срезалась бы.
+   Сдвиг на 58/42 процента, а не ровно на половину: стопка растёт вправо и
+   вверх (cardDistance по X, verticalDistance по Y), поэтому её визуальный
+   центр смещён относительно передней карточки. */
+.card-swap-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-58%, -42%);
+  transform-origin: center center;
+  perspective: 900px;
+  overflow: visible;
+}
+
+.card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 16px;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  box-shadow: 0 24px 60px -32px rgba(17, 18, 22, 0.45);
+  transform-style: preserve-3d;
+  /* Нажатие прокручивает стопку — курсор обязан об этом сообщать. */
+  cursor: pointer;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* scale идёт первым: сначала уменьшаем, потом центрируем уменьшенное.
+   В обратном порядке смещение тоже масштабируется, и стопка уезжает. */
+@media (max-width: 768px) {
+  .card-swap-container {
+    transform: scale(0.72) translate(-58%, -42%);
+  }
+}
+
+@media (max-width: 480px) {
+  .card-swap-container {
+    transform: scale(0.56) translate(-58%, -42%);
+  }
+}
+
+/* Уважение к системной настройке «меньше движения»: стопка замирает в
+   исходной раскладке. В самом компоненте таймер при этом не заводится —
+   см. комментарий в CardSwap.jsx. */
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    will-change: auto;
+  }
+}
