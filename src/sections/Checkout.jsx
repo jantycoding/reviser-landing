@@ -23,7 +23,7 @@ import { trackWhatsAppClick } from '../lib/track';
  * Поэтому в запасном режиме кнопка — настоящая <a href> с уже подставленными
  * именем и телефоном.
  */
-/** Неразрывные пробелы в цене: «Аудит бизнеса за 14 990 ₸» иначе рвётся на
+/** Неразрывные пробелы в цене: «Аудит бизнеса за 20 990 ₸» иначе рвётся на
  *  «за 9 / 900 ₸» — в заголовке блока, где человек платит. */
 const bindNumbers = s => String(s).replace(/(\d)\s(?=\d)/g, '$1\u00A0').replace(/\s₸/g, '\u00A0₸');
 
@@ -212,7 +212,7 @@ function Summary() {
   return (
     <div className="rounded-xl border border-line bg-surface/60 px-4 py-4 md:px-5">
       {/* Нейтральный заголовок чека. Раньше здесь стояла та же фраза, что в h2
-          слева («Аудит бизнеса — 14 990 ₸»), — одно и то же предложение дважды
+          слева («Аудит бизнеса — 20 990 ₸»), — одно и то же предложение дважды
           на одном экране в 550px друг от друга. */}
       <div className="text-body font-semibold text-chalk">{checkout.summaryTitle ?? 'Вы платите за'}</div>
       <ul className="mt-3 space-y-2">
@@ -371,7 +371,7 @@ export default function Checkout() {
       const res = await fetch(`${payEndpoint}/invoice`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, product: 'audit', amount: 14990 }),
+        body: JSON.stringify({ ...values, product: 'audit', amount: 20990 }),
       });
       if (!res.ok) throw new Error(String(res.status));
       const data = await res.json(); // { code, payUrl, qr }

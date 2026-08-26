@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Reveal from '../components/ui/Reveal';
 import { Section, Eyebrow, SectionTitle, SectionLead } from '../components/ui/Section';
 import PriceUsd from '../components/ui/PriceUsd';
@@ -5,58 +6,47 @@ import { pricing } from '../content/site';
 
 /**
  * Галочка всегда мятная. verify по дизайн-системе значит «это вы получаете»,
- * signal — «действие и находки». Оранжевые галочки в главном тарифе лишали
- * стартовую карточку единственного сигнала «вот что входит в 14 990 ₸» и
- * смешивали два смысла в одном цвете.
+ * signal — «действие и находки».
  */
 function Check() {
   return (
-    <svg
-      viewBox="0 0 20 20"
-      className="mt-[0.4em] h-3.5 w-3.5 shrink-0 text-verify"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 20 20" className="mt-[0.4em] h-3.5 w-3.5 shrink-0 text-verify" fill="none" aria-hidden="true">
       <path d="M4 10.5l4 4 8-9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 /**
- * Выделенный тариф раньше обводил react-bits ElectricBorder: SVG-фильтр
- * с турбулентностью, который перерисовывался каждый кадр и давал дрожащий
- * край. Заменён на статичную рамку + мягкое свечение — тот же акцент,
- * ноль работы для GPU.
+ * Карточка тарифа.
+ *
+ * ПОДСВЕТКА ВЫБРАННОГО, 26.08.2026 (запрос владельца: «когда навожу на цены,
+ * они становятся чёрными — чтобы было видно, что я переключаюсь»).
+ *
+ * Сделано не компонентом из react-bits, а переключением класса `.scope-dark`,
+ * который в проекте уже есть. Причина не в экономии: `.scope-dark` меняет
+ * ЗНАЧЕНИЯ токенов внутри своего поддерева — ink становится чёрным, chalk
+ * белым, signal почти белым. Поэтому чернеет не фон, а вся карточка целиком и
+ * согласованно: заголовок, цена, описание, галочки и кнопка, которая из
+ * тёмной становится светлой. Ни один класс внутри карточки для этого не
+ * переписывается. Любой компонент-обёртка покрасил бы только фон, и текст на
+ * нём пришлось бы чинить руками в семи местах.
+ *
+ * Активная карточка выбирается наведением, фокусом И тапом. Тап здесь не
+ * дублирование, а единственный способ на телефоне: ховера там нет, а именно
+ * телефон — основной экран этой страницы.
  */
-function PlanCard({ plan, muted = false }) {
-  const { featured } = plan;
-
+function PlanCard({ plan, active, onActivate }) {
   return (
     <div
-      /* Одинаковый внутренний паддинг у всех трёх карточек — обязательное
-         условие построчного сравнения: при p-10 против p-7 содержимое
-         разъезжалось по вертикали ещё до всякой типографики.
-         Вес выделенного тарифа держат рамка, свечение и фон, а не размер полей.
-         Ховер: у главной карточки — самый сильный на странице (раньше она была
-         единственной вообще без ховера, при том что нажать нужно именно её),
-         у остальных рамка уходит в тёплый оттенок вместо неразличимого
-         line → line-2. */
-      className={`relative flex h-full flex-col rounded-2xl border p-7 transition-[border-color,box-shadow] md:p-8 ${
-        featured
-          ? 'border-signal/50 bg-surface hover:border-signal hover:shadow-[0_24px_60px_-30px_rgba(185,190,199,0.9)]'
-          : 'border-line bg-surface/50 hover:border-signal/25'
+      onMouseEnter={onActivate}
+      onFocusCapture={onActivate}
+      onClick={onActivate}
+      className={`relative flex h-full cursor-pointer flex-col rounded-2xl border p-7 transition-colors duration-300 md:p-8 ${
+        active ? 'scope-dark border-ink bg-ink' : 'border-line bg-surface/50'
       }`}
     >
-      {featured && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -inset-px -z-10 rounded-2xl"
-          style={{ background: 'radial-gradient(70% 60% at 50% 0%, rgba(185,190,199,0.22), transparent 70%)' }}
-        />
-      )}
-
       <div className="flex min-h-7 items-center justify-between gap-3">
-        <h3 className="text-h3 font-semibold text-chalk">{plan.name}</h3>
+        <span className="text-h3 font-semibold text-chalk">{plan.name}</span>
         {plan.badge && (
           <span className="rounded-md bg-signal px-2.5 py-1 font-mono text-label font-semibold tracking-[0.12em] text-ink uppercase">
             {plan.badge}
@@ -64,52 +54,19 @@ function PlanCard({ plan, muted = false }) {
         )}
       </div>
 
-      {/* Один кегль цены на все три карточки.
-          Замер до правки: цены стояли на трёх разных высотах и трёх кеглях —
-          68px / 44px / 25.9px, — то есть в единственной таблице страницы,
-          которую сканируют горизонтально, сравнивать было нечего, а лестница
-          читалась наоборот: «6 900» выглядело весомее, чем «600 000».
-          Стартовый тариф выделен весом и полной яркостью текста, а не
-          размером; резерв высоты рассчитан на самый высокий блок, поэтому
-          описания и списки во всех карточках начинаются на одной линии. */}
+      {/* Один кегль цены на все три карточки: это единственная таблица
+          страницы, которую сканируют по горизонтали, и сравнивать в ней
+          нужно цифры, а не размеры шрифта. Резерв высоты — чтобы описания
+          во всех карточках начинались на одной линии. */}
       <div className="mt-6 flex min-h-[5rem] flex-col justify-start">
-        {plan.priceHidden ? (
-          /* Цена под размытием, а не удалённая.
-             Пустое место на месте цифры читается как «мы сами не знаем»;
-             размытая цифра — как «считается под вас», и заодно оставляет
-             якорь порядка величины, ради которого тариф вообще стоит рядом.
-             aria-hidden + select-none обязательны: цифра здесь декоративная и
-             не должна попадать ни в скринридер, ни в выделение мышью, ни в
-             поиск по странице — иначе размытие оказывается косметикой поверх
-             доступного текста, то есть обманом. Смысл несёт priceNote. */
-          <>
-            <div
-              aria-hidden="true"
-              className="text-metric font-semibold whitespace-nowrap text-chalk/70 opacity-70 blur-[9px] select-none"
-            >
-              {plan.price}
-            </div>
-            <div className="mt-2 text-fine text-fog">{plan.priceNote}</div>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-              <span
-                className={`text-metric whitespace-nowrap ${featured ? 'font-bold text-chalk' : muted ? 'font-semibold text-chalk/80' : 'font-semibold text-chalk/90'}`}
-              >
-                {plan.price}
-              </span>
-              {plan.priceUsd && <PriceUsd className="-translate-y-[0.15em]">{plan.priceUsd}</PriceUsd>}
-            </div>
-            <div className="mt-2 text-fine text-mist">{plan.note}</div>
-          </>
-        )}
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+          <span className="text-metric font-bold whitespace-nowrap text-chalk">{plan.price}</span>
+          {plan.priceUsd && <PriceUsd className="-translate-y-[0.15em]">{plan.priceUsd}</PriceUsd>}
+        </div>
+        <div className="mt-2 text-fine text-mist">{plan.note}</div>
       </div>
 
-      {/* Резерв под четыре строки описания: у стартового тарифа их четыре, у
-          остальных две, и без общей высоты перечни фич начинались с разбросом
-          до 81px — глаз каждый раз заново искал, где начинается список. */}
-      <p className="mt-4 text-body text-fog lg:min-h-[8.2em]">{plan.description}</p>
+      <p className="mt-4 text-body text-fog lg:min-h-[7.4em]">{plan.description}</p>
 
       <ul className="mt-7 flex-1 space-y-3">
         {plan.features.map(feature => (
@@ -120,15 +77,9 @@ function PlanCard({ plan, muted = false }) {
         ))}
       </ul>
 
-      <p className="mt-6 min-h-5 text-fine text-mist">{plan.footnote ?? ''}</p>
-
       <a
         href="#checkout"
-        className={`press mt-6 block rounded-xl px-6 py-3.5 text-center text-body font-semibold ${
-          featured
-            ? 'bg-signal text-ink hover:-translate-y-0.5 hover:bg-signal-soft hover:shadow-[0_12px_28px_-14px_rgba(185,190,199,0.85)]'
-            : 'border border-line text-chalk hover:-translate-y-0.5 hover:border-line-2 hover:bg-surface-2'
-        }`}
+        className="press mt-7 block rounded-xl bg-signal px-6 py-3.5 text-center text-body font-semibold text-ink transition-colors hover:bg-signal-soft"
       >
         {plan.cta}
       </a>
@@ -137,6 +88,13 @@ function PlanCard({ plan, muted = false }) {
 }
 
 export default function Pricing() {
+  /* Стартовое состояние — рекомендованный тариф. Так на телефоне, где ховера
+     нет, человек сразу видит, какой из трёх мы считаем основным. */
+  const [active, setActive] = useState(() => {
+    const i = pricing.plans.findIndex(p => p.featured);
+    return i < 0 ? 0 : i;
+  });
+
   return (
     <Section id="pricing">
       <Reveal>
@@ -145,16 +103,55 @@ export default function Pricing() {
         <SectionLead>{pricing.subtitle}</SectionLead>
       </Reveal>
 
-      {/* Стартовый тариф шире остальных: цель страницы — импульсная покупка
-          аудита за 14 990 ₸, и на широком экране это должно быть видно ещё до
-          чтения текста карточек. */}
-      <div className="mt-stack grid items-stretch gap-5 lg:grid-cols-[1.25fr_1fr_1fr]">
+      {/* Колонки равной ширины. Раньше стартовая была шире остальных (1.25fr),
+          потому что тарифы были разнородными. Теперь это три сравнимых
+          продукта одной лестницы, и разная ширина мешала бы сравнивать
+          построчно — а именно построчно их и читают. */}
+      <div className="mt-stack grid items-stretch gap-4 lg:grid-cols-3">
         {pricing.plans.map((plan, i) => (
           <Reveal key={plan.name} delay={i * 0.07} className="h-full">
-            <PlanCard plan={plan} muted={i === pricing.plans.length - 1} />
+            <PlanCard plan={plan} active={active === i} onActivate={() => setActive(i)} />
           </Reveal>
         ))}
       </div>
+
+      {/* Пакеты сверх тарифа — строкой, а не четвёртой карточкой: они не
+          конкурируют с тарифами, а достраиваются к любому из них. */}
+      {pricing.addons && (
+        <Reveal delay={0.24} className="mt-8">
+          <div className="flex flex-col gap-3 border-t border-line pt-6 md:flex-row md:items-baseline md:gap-6">
+            <span className="shrink-0 text-body font-semibold text-chalk">{pricing.addons.title}</span>
+            <ul className="flex min-w-0 flex-1 flex-wrap gap-2">
+              {pricing.addons.items.map(item => (
+                <li key={item} className="rounded-lg border border-line px-3 py-1.5 text-fine text-fog">
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <span className="text-fine text-mist md:ml-auto md:shrink-0">{pricing.addons.note}</span>
+          </div>
+        </Reveal>
+      )}
+
+      {/* Внедрение вынесено из ряда карточек: это проект под задачу, а не
+          сравнимый с аудитами продукт. Четвёртой карточкой в одном ряду оно
+          ломало сравнение остальных трёх. */}
+      {pricing.next && (
+        <Reveal delay={0.3} className="mt-5">
+          <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface/50 p-6 md:flex-row md:items-center md:justify-between md:p-7">
+            <div>
+              <div className="text-card font-semibold text-chalk">{pricing.next.title}</div>
+              <p className="mt-1.5 max-w-[62ch] text-fine text-fog">{pricing.next.text}</p>
+            </div>
+            <a
+              href="#checkout"
+              className="press shrink-0 rounded-xl border border-line-2 px-5 py-3.5 text-center text-body font-semibold whitespace-nowrap text-chalk transition-colors hover:bg-surface-2"
+            >
+              {pricing.next.cta}
+            </a>
+          </div>
+        </Reveal>
+      )}
     </Section>
   );
 }

@@ -116,8 +116,8 @@ export function trackWhatsAppClick(source, values) {
      по «написать в WhatsApp» в подвале, алгоритм будет оптимизироваться на
      любопытных, а не на покупателей. Остальные клики — Contact. */
   if (source === 'checkout') {
-    pixel('InitiateCheckout', { content_name: 'audit', value: 14990, currency: 'KZT' });
-    if (hasForm) pixel('Lead', { content_name: 'audit', value: 14990, currency: 'KZT' });
+    pixel('InitiateCheckout', { content_name: 'audit', value: 20990, currency: 'KZT' });
+    if (hasForm) pixel('Lead', { content_name: 'audit', value: 20990, currency: 'KZT' });
   } else {
     pixel('Contact', { content_name: source });
   }
